@@ -3,17 +3,10 @@ using BattleEngine.Equipments;
 
 namespace BattleEngine;
 
-public class Engine
+public class Engine(IRandomProvider randomProvider)
 {
-    private readonly IRandomProvider _randomProvider;
-
     public Engine() : this(new GameRandomProvider())
     {
-    }
-
-    public Engine(IRandomProvider randomProvider)
-    {
-        _randomProvider = randomProvider;
     }
 
     public AttackResult Attack(Unit attacker, Unit target)
@@ -24,7 +17,7 @@ public class Engine
             Target = target
         };
 
-        int rnd = _randomProvider.Next();
+        int rnd = randomProvider.Next();
 
         // Calculate if the attacker has critical hit
         bool isCritical = rnd % Math.Floor(attacker.Spr / 4.0) > rnd % 100;
@@ -189,7 +182,7 @@ public class Engine
 
     private (int @base, int bonus) CalculateAttackDamageParts(Unit attacker, Unit target)
     {
-        int rnd = _randomProvider.Next();
+        int rnd = randomProvider.Next();
         if (attacker.IsAi)
         {
             int @base = Math.Max(1, attacker.Atk - target.Def);
@@ -262,7 +255,7 @@ public class Engine
 
     private AttackResult Magic(Unit attacker, Unit target, string spellName, bool isMultiTarget)
     {
-        int rnd = _randomProvider.Next();
+        int rnd = randomProvider.Next();
         Spell spell = GetSpell(spellName);
 
         if (target.IsImmuneTo(spell.ElementalAffix))
