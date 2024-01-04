@@ -4,7 +4,8 @@ This battle engine strives to implement all of the login which is in video game 
 
 ## Current stage of the project
 
-- [ ] ATB
+- [x] Escape
+- [x] ATB
 - [ ] Black Magic
 - [ ] Running Away
 - [ ] Status Effect
