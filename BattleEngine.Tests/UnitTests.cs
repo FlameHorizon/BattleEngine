@@ -69,4 +69,15 @@ public class UnitTests
         u.Spr = 5;
         u.Spr.Should().Be(10);
     }
+
+    [Fact]
+    public void Unit_Should_HaveAtbBarLength_WhenSpdIsSet()
+    {
+        var u = new Unit
+        {
+            Spd = 10
+        };
+        
+        u.AtbBarLength.Should().Be(8000);
+    }
 }

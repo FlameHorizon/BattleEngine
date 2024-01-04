@@ -3,11 +3,30 @@ using BattleEngine.Equipments;
 
 namespace BattleEngine;
 
-public class Engine(IRandomProvider randomProvider)
+public class Engine
 {
+    private readonly IRandomProvider _randomProvider;
+
     public Engine() : this(new GameRandomProvider())
     {
     }
+
+    public Engine(IRandomProvider randomProvider): this(new Party(), new Enemies(), randomProvider)
+    {
+    }
+
+    public Engine(Party party, Enemies enemies, IRandomProvider randomProvider)
+    {
+        Party = party;
+        Enemies = enemies;
+        _randomProvider = randomProvider;
+        
+        InitializeAtb();
+    }
+
+    public Party Party { get; set; }
+    public Enemies Enemies { get; set; }
+    public BattleSpeed BattleSpeed { get; set; }
 
     public AttackResult Attack(Unit attacker, Unit target)
     {
@@ -17,7 +36,7 @@ public class Engine(IRandomProvider randomProvider)
             Target = target
         };
 
-        int rnd = randomProvider.Next();
+        int rnd = _randomProvider.Next();
 
         // Calculate if the attacker has critical hit
         bool isCritical = rnd % Math.Floor(attacker.Spr / 4.0) > rnd % 100;
@@ -182,7 +201,7 @@ public class Engine(IRandomProvider randomProvider)
 
     private (int @base, int bonus) CalculateAttackDamageParts(Unit attacker, Unit target)
     {
-        int rnd = randomProvider.Next();
+        int rnd = _randomProvider.Next();
         if (attacker.IsAi)
         {
             int @base = Math.Max(1, attacker.Atk - target.Def);
@@ -255,7 +274,7 @@ public class Engine(IRandomProvider randomProvider)
 
     private AttackResult Magic(Unit attacker, Unit target, string spellName, bool isMultiTarget)
     {
-        int rnd = randomProvider.Next();
+        int rnd = _randomProvider.Next();
         Spell spell = GetSpell(spellName);
 
         if (target.IsImmuneTo(spell.ElementalAffix))
@@ -376,6 +395,95 @@ public class Engine(IRandomProvider randomProvider)
     public IEnumerable<AttackResult> Magic(Unit attacker, IEnumerable<Unit> targets, string spellName)
     {
         return targets.Select(target => Magic(attacker, target, spellName, true));
+    }
+
+    /// <summary>
+    ///     Party attempts to flee from the battle. Chance of running away is affected by party's
+    ///     average level (KO included) and the average level of the enemies (dead monsters not included).
+    /// </summary>
+    /// <returns><c>true</c> if attempt is successful and party can run away, otherwise <c>false</c></returns>
+    public bool Escape()
+    {
+        var chance = (int)Math.Floor(Party.AvgLvl * Math.Floor(200.0 / Enemies.AliveAvgLvl) / 16.0);
+        int rnd = _randomProvider.Next();
+        return rnd % 100 < chance;
+    }
+
+    /// <summary>
+    ///    Initializes the battle by setting the ATB of all units according to formula.
+    /// </summary>
+    private void InitializeAtb()
+    {
+        foreach (Unit u in Party.Members)
+        {
+            u.Atb = CalcInitialAtb(u.AtbBarLength);
+        }
+        
+        foreach (Unit u in Enemies.Members)
+        {
+            u.Atb = CalcInitialAtb(u.AtbBarLength);
+        }
+    }
+
+    private int CalcInitialAtb(int atbBarLength)
+    {
+        int rnd = _randomProvider.Next();
+        double floor = Math.Floor((double)(rnd / atbBarLength));
+        floor = Math.Max(1, floor);
+        return (int)(rnd % (floor * atbBarLength));
+    }
+
+    /// <summary>
+    ///     Advances the battle by one tick increasing the ATB of all units.
+    /// </summary>
+    public void Tick()
+    {
+        int increment = BattleSpeed switch
+        {
+            BattleSpeed.Slow => 8,
+            BattleSpeed.Medium => 10,
+            BattleSpeed.Fast => 14,
+            _ => throw new ArgumentOutOfRangeException()
+        };
+        
+        foreach (Unit u in Party.Members)
+        {
+            increment = u.Statuses.HasFlag(Statuses.Slow) ? (int)Math.Floor(increment * 0.66) : increment;
+            increment = u.Statuses.HasFlag(Statuses.Haste) ? (int)Math.Floor(increment * 1.5) : increment;
+            u.Atb += increment;
+        }
+        
+        foreach (Unit u in Enemies.Members)
+        {
+            u.Atb += increment;
+        }
+    }
+}
+
+public enum BattleSpeed
+{
+    Slow,
+    Medium,
+    Fast
+}
+
+public class Enemies
+{
+    public IEnumerable<Unit> Members { get; set; } = new List<Unit>();
+
+    public double AliveAvgLvl
+    {
+        get => Members.Where(u => u.IsAlive).Average(u => u.Lvl);
+    }
+}
+
+public class Party
+{
+    public IEnumerable<Unit> Members { get; set; } = new List<Unit>();
+
+    public double AvgLvl
+    {
+        get => Members.Average(u => u.Lvl);
     }
 }
 
@@ -501,6 +609,15 @@ public class Unit
     public bool IsAi { get; set; }
     public bool IsBoss { get; set; }
 
+    public bool IsAlive
+    {
+        get => CurrentHp > 0;
+    }
+
+    public int CurrentHp { get; set; }
+    public int AtbBarLength => (60 - Spd) * 160;
+    public int Atb { get; set; }
+
     public void AddStatus(Statuses status)
     {
         Statuses |= status;
@@ -581,7 +698,7 @@ public enum EnemyType
 }
 
 [Flags]
-public enum Statuses : short
+public enum Statuses : int
 {
     None = 0,
     Confuse = 1,
@@ -598,7 +715,9 @@ public enum Statuses : short
     Backrow = 2 << 10,
     Protect = 2 << 11,
     Silence = 2 << 12,
-    Shell
+    Shell = 2 << 13,
+    Slow = 2 << 14,
+    Haste = 2 << 15
 }
 
 public class Equipment

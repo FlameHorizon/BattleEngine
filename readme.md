@@ -4,15 +4,15 @@ This battle engine strives to implement all of the login which is in video game 
 
 ## Current stage of the project
 
-- [ ] ATB
-- [ ] Black Magic
-- [ ] Running Away
-- [ ] Status Effect
+- [x] ATB
+- [x] Running Away
 - [x] Attack Command
-- [ ] White Magic
-- [x] Damage Alterations
-- [ ] Summon Magic
+- [ ] Damage Alterations, missing Ipsen's Castle and Reflect.
 - [ ] Trance
+- [ ] Black Magic
+- [ ] Status Effect
+- [ ] White Magic
+- [ ] Summon Magic
 - [ ] Blue Magic
 - [ ] Steal
 - [ ] Dragon
