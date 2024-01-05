@@ -316,36 +316,25 @@ public class Engine
             // If target reflects spell to a party/enemy group which has only
             // one alive member then is is no longer a multi target spell
             // and such penalty can be lifted.
+            int aliveCount =
+                attacker.IsAi ? Enemies.AliveCount : Party.AliveCount;
+            IEnumerable<Unit> group =
+                attacker.IsAi ? Enemies.Members : Party.Members;
 
-            if (attacker.IsAi)
+            Unit reflectTo;
+            if (aliveCount == 1)
             {
-                if (Enemies.AliveCount == 1)
-                {
-                    attackResult.RefelectedTo = Enemies.Members.First();
-                    isMultiTarget = false;
-                }
-                else
-                {
-                    int index = rnd % Enemies.AliveCount;
-                    attackResult.RefelectedTo =
-                        Enemies.Members.ToArray()[index];
-                }
+                reflectTo = group.First();
+                isMultiTarget = false;
             }
             else
             {
-                if (Party.AliveCount == 1)
-                {
-                    attackResult.RefelectedTo = Party.Members.First();
-                    isMultiTarget = false;
-                }
-                else
-                {
-                    int index = rnd % Party.AliveCount;
-                    attackResult.RefelectedTo = Party.Members.ToArray()[index];
-                }
+                int index = rnd % aliveCount;
+                reflectTo = group.ToArray()[index];
             }
 
-            target = attackResult.RefelectedTo;
+            attackResult.RefelectedTo = reflectTo;
+            target = reflectTo;
         }
 
         if (target.IsImmuneTo(spell.ElementalAffix))
