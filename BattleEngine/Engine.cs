@@ -297,7 +297,9 @@ public class Engine
         return Magic(attacker, target, spellName, false);
     }
 
-    private AttackResult Magic(Unit attacker, Unit target, string spellName,
+    private AttackResult Magic(Unit attacker,
+        Unit target,
+        string spellName,
         bool isMultiTarget)
     {
         int rnd = _randomProvider.Next();
@@ -308,9 +310,14 @@ public class Engine
             Target = target
         };
 
+        // Determine if target has Reflect2x status before we do any changes
+        // to the AttackResult instance.
+        bool targetHasReflect2x = target.Statuses.HasFlag(Statuses.Reflect2x);
+        
         // If target has Reflect status then the spell will be
         // reflected back to someone from opposing team.
-        if (target.Statuses.HasFlag(Statuses.Reflect))
+        if (target.Statuses.HasFlag(Statuses.Reflect) 
+            || target.Statuses.HasFlag(Statuses.Reflect2x))
         {
             attackResult.IsReflected = true;
             // If target reflects spell to a party/enemy group which has only
@@ -366,6 +373,11 @@ public class Engine
                           rnd % (Math.Floor((attacker.Lvl + attacker.Mag) /
                                             8.0) + 1));
 
+        if (targetHasReflect2x)
+        {
+            bonus *= 2;
+        }
+        
         // When target absorbs elemental damage is should
         // be healed by the amount indicated in the damage.
         if (target.AbsorbsElemental(spell.ElementalAffix))
@@ -811,7 +823,8 @@ public enum Statuses
     Shell = 2 << 13,
     Slow = 2 << 14,
     Haste = 2 << 15,
-    Reflect = 2 << 16
+    Reflect = 2 << 16,
+    Reflect2x = 2 << 17
 }
 
 public class Equipment

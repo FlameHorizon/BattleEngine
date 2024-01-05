@@ -885,6 +885,33 @@ public class EngineTests
         attackInfo.ToArray()[2].Target.Name.Should().Be("C");
         attackInfo.ToArray()[3].Target.Name.Should().Be("D");
     }
+
+    [Fact]
+    public void Magic_Should_Reflect2x_When_TargetHasStatusReflect2x()
+    {
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        attacker.CurrentHp = 100;
+        attacker.AddStatus(Statuses.Reflect2x);
+
+        Unit target = DefaultUnit();
+        target.CurrentHp = 100;
+        target.IsAi = true;
+
+        var p = new Party
+        {
+            Members = new[] { attacker }
+        };
+
+        var en = new Enemies
+        {
+            Members = new[] { target }
+        };
+
+        var e = new Engine(p, en, rnd);
+        AttackResult attackInfo = e.Magic(attacker, attacker, "Fire");
+        attackInfo.Damage.Should().Be(308);
+    }
 }
 
 public class MockRandomProvider : IRandomProvider
