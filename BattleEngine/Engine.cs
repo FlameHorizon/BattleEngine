@@ -316,10 +316,28 @@ public class Engine
             // If target reflects spell to a party/enemy group which has only
             // one alive member then is is no longer a multi target spell
             // and such penalty can be lifted.
-            int aliveCount =
-                attacker.IsAi ? Enemies.AliveCount : Party.AliveCount;
-            IEnumerable<Unit> group =
-                attacker.IsAi ? Enemies.Members : Party.Members;
+
+            int aliveCount;
+            IEnumerable<Unit> group;
+            if (attacker.IsAi)
+            {
+                group = Enemies.Members;
+                aliveCount = Enemies.AliveCount;
+            }
+            else
+            {
+                // This is player attacking own units.  
+                if (attacker.IsAi == false && target.IsAi == false)
+                {
+                    group = Enemies.Members;
+                    aliveCount = Enemies.AliveCount;
+                }
+                else // this is Ai attacking player controllable units.
+                {
+                    group = Party.Members;
+                    aliveCount = Party.AliveCount;
+                }
+            }
 
             Unit reflectTo;
             if (aliveCount == 1)

@@ -627,6 +627,8 @@ public class EngineTests
         Unit target = DefaultUnit();
         target.Name = "B";
         target.AddStatus(Statuses.Reflect);
+        target.IsAi = true;
+        target.CurrentHp = 100;
 
         var p = new Party
         {
@@ -665,6 +667,8 @@ public class EngineTests
 
         en.Members.First().AddStatus(Statuses.Reflect);
         en.Members.First().Name = "B";
+        en.Members.First().IsAi = true;
+        en.Members.Last().IsAi = true;
 
         var e = new Engine(p, en, rnd);
         IEnumerable<AttackResult> attackInfo =
@@ -744,6 +748,142 @@ public class EngineTests
         second.Damage.Should().Be(70);
         second.Attacker.Should().Be(p.Members.First());
         second.Target.Should().Be(en.Members.Last());
+    }
+
+    [Fact]
+    public void Magic_Should_Reflect_IfCastedOnOwnParty()
+    {
+        var rnd = new MockRandomProvider(1);
+        var p = new Party
+        {
+            Members = new[] { DefaultUnit(), DefaultUnit() }
+        };
+        p.Members.First().Name = "A";
+        p.Members.First().CurrentHp = 100;
+        p.Members.First().AddStatus(Statuses.Reflect);
+        p.Members.Last().Name = "B";
+        p.Members.Last().CurrentHp = 100;
+        p.Members.Last().AddStatus(Statuses.Reflect);
+
+        var en = new Enemies
+        {
+            Members = new[] { DefaultUnit(), DefaultUnit() }
+        };
+
+        en.Members.First().Name = "C";
+        en.Members.First().CurrentHp = 100;
+        en.Members.First().IsAi = true;
+        en.Members.Last().Name = "D";
+        en.Members.Last().CurrentHp = 100;
+        en.Members.Last().IsAi = true;
+
+        var e = new Engine(p, en, rnd);
+        IEnumerable<AttackResult> attackInfo =
+            e.Magic(p.Members.First(), p.Members, "Fire");
+
+        // One enemy should suffer damage 
+        // Other one should reflect and deal full damage if there only
+        // one character that to receive damage.
+        AttackResult first = attackInfo.First();
+        first.Attacker.Name.Should().Be("A");
+        first.Target.Name.Should().Be("A");
+        first.Damage.Should().Be(70);
+        first.IsReflected.Should().BeTrue();
+        first.RefelectedTo!.Name.Should().Be("D");
+    }
+
+    [Fact]
+    public void Magic_Should_Reflect_OnlyOnceIfBothPartiesHaveReflect()
+    {
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+        attacker.CurrentHp = 100;
+        attacker.AddStatus(Statuses.Reflect);
+
+        Unit target = DefaultUnit();
+        target.Name = "B";
+        target.CurrentHp = 100;
+        target.AddStatus(Statuses.Reflect);
+        target.IsAi = true;
+
+        var p = new Party
+        {
+            Members = new[] { attacker }
+        };
+
+        var en = new Enemies
+        {
+            Members = new[] { target }
+        };
+
+        var e = new Engine(p, en, rnd);
+
+        AttackResult attackInfo = e.Magic(attacker, target, "Fire");
+        attackInfo.Attacker.Name.Should().Be("A");
+        attackInfo.Target.Name.Should().Be("B");
+        attackInfo.IsReflected.Should().BeTrue();
+        attackInfo.RefelectedTo!.Name.Should().Be("A");
+    }
+
+    [Fact]
+    public void Magic_Should_Reflect_UpToFourTimes()
+    {
+        var rnd = new MockRandomProvider(1);
+        Unit u1 = DefaultUnit();
+        u1.Name = "A";
+        u1.CurrentHp = 100;
+        u1.AddStatus(Statuses.Reflect);
+        
+        Unit u2 = DefaultUnit();
+        u2.Name = "B";
+        u2.CurrentHp = 100;
+        u2.AddStatus(Statuses.Reflect);
+
+        Unit u3 = DefaultUnit();
+        u3.Name = "C";
+        u3.CurrentHp = 100;
+        u3.AddStatus(Statuses.Reflect);
+
+        Unit u4 = DefaultUnit();
+        u4.Name = "D";
+        u4.CurrentHp = 100;
+        u4.AddStatus(Statuses.Reflect);
+        
+        Unit target = DefaultUnit();
+        target.Name = "E";
+        target.CurrentHp = 100;
+        target.IsAi = true;
+
+        var p = new Party
+        {
+            Members = new[] { u1, u2, u3, u4 }
+        };
+
+        var en = new Enemies
+        {
+            Members = new[] { target }
+        };
+
+        var e = new Engine(p, en, rnd);
+        IEnumerable<AttackResult> attackInfo = e.Magic(
+            p.Members.First(),
+            p.Members, 
+            "Fire");
+
+        attackInfo.Should().HaveCount(4);
+        attackInfo.Should().AllSatisfy(x =>
+        {
+            x.Attacker.Name.Should().Be("A");
+            x.IsReflected = true;
+            x.RefelectedTo!.Name.Should().Be("E");
+            x.Damage.Should().Be(154);
+        });
+        
+        attackInfo.ToArray()[0].Target.Name.Should().Be("A");
+        attackInfo.ToArray()[1].Target.Name.Should().Be("B");
+        attackInfo.ToArray()[2].Target.Name.Should().Be("C");
+        attackInfo.ToArray()[3].Target.Name.Should().Be("D");
     }
 }
 
