@@ -112,7 +112,7 @@ public class Engine
             : target.Spr >= rnd % 100;
         result.IsCounterAttack = isCounterAttack;
 
-        if (attacker.IsInTrance)
+        if (attacker.Statuses.HasFlag(Statuses.Trance))
         {
             result.TranceDecrease =
                 (int)(Math.Floor((300.0 - attacker.Lvl) / attacker.Spr)
@@ -157,11 +157,10 @@ public class Engine
 
         if (attacker.Statuses.HasFlag(Statuses.Trance))
         {
-            if (attacker.Name == "Stainer")
+            if (attacker.Name == "Stainer"
+                && attacker.Equipment.Weapon.Name != "Blood Sword")
             {
-                bonus = attacker.Equipment.Weapon.Name != "Blood Sword"
-                    ? (int)Math.Floor((double)(bonus * 3))
-                    : (int)Math.Floor(bonus * 1.5);
+                bonus = (int)Math.Floor(bonus * 3.0);
             }
             else
             {
@@ -468,7 +467,7 @@ public class Engine
         bonus = Math.Max(1, bonus);
         result.Damage = @base * bonus;
 
-        if (attacker.IsInTrance)
+        if (attacker.Statuses.HasFlag(Statuses.Trance))
         {
             result.TranceDecrease =
                 (int)(Math.Floor((300.0 - attacker.Lvl) / attacker.Spr)

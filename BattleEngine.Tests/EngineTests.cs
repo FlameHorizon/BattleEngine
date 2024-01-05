@@ -960,7 +960,8 @@ public class EngineTests
     {
         var rnd = new MockRandomProvider(1);
         Unit attacker = DefaultUnit();
-        attacker.IsInTrance = true;
+        attacker.AddStatus(Statuses.Trance);
+        
         attacker.Trance = attacker.TranceBarLength;
         Unit target = DefaultUnit();
         target.IsAi = true;
@@ -971,6 +972,29 @@ public class EngineTests
 
         attackResult = e.Magic(attacker, target, "Fire");
         attackResult.TranceDecrease.Should().Be(34);
+    }
+
+    [Fact]
+    public void Trance_Should_NotIncreaseDamage_When_StainerWearingBloodSword()
+    {
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        attacker.Name = "Stainer";
+        attacker.AddStatus(Statuses.Trance);
+        attacker.Trance = attacker.TranceBarLength;
+        attacker.Equipment.Weapon = new Weapon()
+        {
+            Name = "Blood Sword",
+            Atk = 24,
+            WeaponType = WeaponType.Sword
+        };
+
+        Unit target = DefaultUnit();
+        target.IsAi = true;
+
+        var e = new Engine(rnd);
+        AttackResult attackResult = e.Attack(attacker, target);
+        attackResult.Damage.Should().Be(240);
     }
 }
 
