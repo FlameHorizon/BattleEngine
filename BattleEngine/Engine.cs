@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using BattleEngine.Equipments;
+using BattleEngine.Spells;
 
 namespace BattleEngine;
 
@@ -343,7 +344,7 @@ public class Engine
         bool isMultiTarget)
     {
         int rnd = _randomProvider.Next();
-        Spell spell = FindSpell(spellName);
+        SpellBase spell = FindSpell(spellName);
         var result = new AttackResult
         {
             Attacker = attacker,
@@ -352,7 +353,7 @@ public class Engine
 
         // Determine if target has Reflect2x status before we do any changes
         // to the AttackResult instance.
-        bool targetHasReflect2x = target.Statuses.HasFlag(Statuses.Reflect2x);
+        bool targetHasReflect2X = target.Statuses.HasFlag(Statuses.Reflect2x);
 
         // If target has Reflect status then the spell will be
         // reflected back to someone from opposing team.
@@ -402,70 +403,38 @@ public class Engine
             target = reflectTo;
         }
 
-        if (target.IsImmuneTo(spell.ElementalAffix))
-        {
-            result.Damage = 0;
-            return result;
-        }
-
         int @base = spell.Power - target.MagDef;
-        var bonus = (int)(attacker.Mag +
-                          rnd % (Math.Floor((attacker.Lvl + attacker.Mag) /
-                                            8.0) + 1));
+        @base = Math.Max(1, @base);
 
-        if (targetHasReflect2x)
+        (int bonus, bool isMiss) =
+            spell.CalculateBonus(attacker, target, isMultiTarget, rnd);
+
+
+        if (targetHasReflect2X)
         {
             bonus *= 2;
         }
 
+        if (isMiss)
+        {
+            result.IsMiss = true;
+            result.Damage = 0;
+        }
+        else if (target.IsImmuneTo(spell.ElementalAffix))
+        {
+            result.Damage = 0;
+        }
         // When target absorbs elemental damage is should
         // be healed by the amount indicated in the damage.
-        if (target.AbsorbsElemental(spell.ElementalAffix))
+        else if (target.AbsorbsElemental(spell.ElementalAffix))
         {
             result.TargetAbsorbed = true;
             result.Damage = @base * bonus;
-            return result;
         }
-
-        if (spell.Name == "Demi")
+        else
         {
-            // Because Demi is a special spell we need to handle it differently.
-            return SpellDemi(attacker, target, rnd);
+            result.Damage = @base * bonus;
         }
-
-        if (isMultiTarget)
-        {
-            bonus = (int)Math.Floor(bonus / 2.0);
-        }
-
-        if (target.Statuses.HasFlag(Statuses.Shell))
-        {
-            bonus = (int)Math.Floor(bonus / 2.0);
-        }
-
-        if (attacker.Statuses.HasFlag(Statuses.Mini))
-        {
-            bonus = (int)Math.Floor(bonus / 2.0);
-        }
-
-        if (target.IsWeakTo(spell.ElementalAffix))
-        {
-            bonus = (int)Math.Floor(bonus * 1.5);
-        }
-
-        if (attacker.Equipment.HasElemAtk(spell.ElementalAffix))
-        {
-            bonus = (int)Math.Floor(bonus * 1.5);
-        }
-
-        if (target.IsResistantTo(spell.ElementalAffix))
-        {
-            bonus = (int)Math.Floor(bonus / 2.0);
-        }
-
-        // Bonus value never can be 0.
-        bonus = Math.Max(1, bonus);
-        result.Damage = @base * bonus;
 
         if (attacker.Statuses.HasFlag(Statuses.Trance))
         {
@@ -482,39 +451,25 @@ public class Engine
         return result;
     }
 
-    private static AttackResult SpellDemi(Unit attacker, Unit target, int rnd)
+    private static SpellBase FindSpell(string spellName)
     {
-        var result = new AttackResult
+        var spellNameToSpell = new Dictionary<string, SpellBase>
         {
-            Attacker = attacker,
-            Target = target
-        };
-
-        if (target.IsBoss)
-        {
-            return result;
-        }
-
-        if (60 > rnd % 100) // 40% chance to hit
-        {
-            result.IsMiss = true;
-            return result;
-        }
-
-        result.Damage = (int)Math.Floor(30.0 * target.Hp / 100.0);
-        return result;
-    }
-
-    private static Spell FindSpell(string spellName)
-    {
-        var spellNameToSpell = new Dictionary<string, Spell>
-        {
-            {
-                "Fire", new Spell("Fire", 14, Elements.Fire)
-            },
-            {
-                "Demi", new Spell("Demi", 30, Elements.None)
-            }
+            { "Fire", new Fire() },
+            { "Demi", new Demi() }
+            /*
+            { "Fire", new Spell("Fire", 14, Elements.Fire) },
+            { "Fira", new Spell("Fira", 29, Elements.Fire) },
+            { "Firaga", new Spell("Firaga", 72, Elements.Fire) },
+            { "Blizzard", new Spell("Blizzard", 14, Elements.Fire) },
+            { "Blizzara", new Spell("Blizzara", 29, Elements.Ice) },
+            { "Blizzaga", new Spell("Blizzaga", 72, Elements.Ice) },
+            { "Thunder", new Spell("Thunder", 14, Elements.Thunder) },
+            { "Thundara", new Spell("Thundara", 29, Elements.Thunder) },
+            { "Thundaga", new Spell("Thundaga", 72, Elements.Thunder) },
+            { "Osmose", new Spell("Osmose", 15, Elements.None) },
+            {"Demi", new Spell("Demi", 30, Elements.None)}
+        */
         };
 
         if (spellNameToSpell.ContainsKey(spellName) == false)
@@ -987,7 +942,8 @@ public enum Elements
 {
     None = 0,
     Fire = 1,
-    Ice = 2
+    Ice = 2,
+    Thunder = 2 << 1
 }
 
 public enum WeaponType
