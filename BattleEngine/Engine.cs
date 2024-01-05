@@ -343,7 +343,7 @@ public class Engine
         bool isMultiTarget)
     {
         int rnd = _randomProvider.Next();
-        Spell spell = GetSpell(spellName);
+        Spell spell = FindSpell(spellName);
         var result = new AttackResult
         {
             Attacker = attacker,
@@ -505,7 +505,7 @@ public class Engine
         return result;
     }
 
-    private static Spell GetSpell(string spellName)
+    private static Spell FindSpell(string spellName)
     {
         var spellNameToSpell = new Dictionary<string, Spell>
         {
@@ -584,19 +584,30 @@ public class Engine
 
         foreach (Unit u in Party.Members)
         {
-            increment = u.Statuses.HasFlag(Statuses.Slow)
-                ? (int)Math.Floor(increment * 0.66)
-                : increment;
-            increment = u.Statuses.HasFlag(Statuses.Haste)
-                ? (int)Math.Floor(increment * 1.5)
-                : increment;
+            increment = CalculateAtbIncrement(increment, u);
             u.Atb += increment;
         }
 
         foreach (Unit u in Enemies.Members)
         {
+            increment = CalculateAtbIncrement(increment, u);
             u.Atb += increment;
         }
+    }
+
+    private static int CalculateAtbIncrement(int increment, Unit u)
+    {
+        if (u.Statuses.HasFlag(Statuses.Slow))
+        {
+            increment = (int)Math.Floor(increment * 0.66);
+        }
+
+        if (u.Statuses.HasFlag(Statuses.Haste))
+        {
+            increment = (int)Math.Floor(increment * 1.5);
+        }
+
+        return increment;
     }
 }
 
