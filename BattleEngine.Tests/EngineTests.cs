@@ -18,7 +18,8 @@ public class EngineTests
     [InlineData(WeaponType.Hammer, 3)]
     [InlineData(WeaponType.Fork, 3)]
     [InlineData(WeaponType.Racket, 11)]
-    public void Attack_Should_Return_Damage_With_WeaponType(WeaponType weaponType, int expected)
+    public void Attack_Should_Return_Damage_With_WeaponType(
+        WeaponType weaponType, int expected)
     {
         var rnd = new MockRandomProvider(1);
 
@@ -113,7 +114,8 @@ public class EngineTests
     [InlineData(Statuses.Defend, false)]
     [InlineData(Statuses.Distract, false)]
     [InlineData(Statuses.Vanish, false)]
-    public void Attack_Returns_NoDamage_When_IsMiss(Statuses status, bool applyToAttacker)
+    public void Attack_Returns_NoDamage_When_IsMiss(Statuses status,
+        bool applyToAttacker)
     {
         // Each status lowers the chance of hitting by 50%
         // therefore, by giving random number of 60
@@ -155,7 +157,8 @@ public class EngineTests
     [Theory]
     [InlineData(Sa.ManEater, 16)]
     [InlineData(Sa.MpAttack, 16)]
-    public void Attack_Damage_Alteration_SupportingAbility(Sa ability, int damage)
+    public void Attack_Damage_Alteration_SupportingAbility(Sa ability,
+        int damage)
     {
         var rnd = new MockRandomProvider(1);
 
@@ -172,7 +175,8 @@ public class EngineTests
     [Theory]
     [InlineData(Statuses.Trance, 16, "Zidane")]
     [InlineData(Statuses.Trance, 33, "Stainer")]
-    public void Attack_Damage_Alteration_Statuses(Statuses status, int damage, string unitName)
+    public void Attack_Damage_Alteration_Statuses(Statuses status, int damage,
+        string unitName)
     {
         var rnd = new MockRandomProvider(1);
 
@@ -384,7 +388,8 @@ public class EngineTests
         Unit target2 = DefaultUnit();
         IEnumerable<Unit> targets = new[] { target1, target2 };
 
-        IEnumerable<AttackResult> attackInfos = e.Magic(attacker, targets, "Fire");
+        IEnumerable<AttackResult> attackInfos =
+            e.Magic(attacker, targets, "Fire");
 
         attackInfos.Should().HaveCount(2);
         attackInfos.First().Damage.Should().Be(70);
@@ -461,7 +466,8 @@ public class EngineTests
     [Theory]
     [InlineData(Statuses.Shell, false)]
     [InlineData(Statuses.Mini, true)]
-    public void Magic_Should_NotBeHalved_When_Demi(Statuses status, bool affectsTarget)
+    public void Magic_Should_NotBeHalved_When_Demi(Statuses status,
+        bool affectsTarget)
     {
         var rnd = new MockRandomProvider(61);
         var e = new Engine(rnd);
@@ -482,12 +488,13 @@ public class EngineTests
         }
 
         Unit[] targets =
-        {
+        [
             target1,
             target1
-        };
+        ];
 
-        IEnumerable<AttackResult> attackInfo = e.Magic(attacker, targets, "Demi");
+        IEnumerable<AttackResult> attackInfo =
+            e.Magic(attacker, targets, "Demi");
         attackInfo.First().Damage.Should().Be(30);
         attackInfo.First().Damage.Should().Be(30);
     }
@@ -540,7 +547,7 @@ public class EngineTests
         bool escapeResult = e.Escape();
         escapeResult.Should().Be(success);
     }
-    
+
     [Fact]
     public void Engine_Should_InitializeAtbBars()
     {
@@ -556,7 +563,7 @@ public class EngineTests
         };
 
         _ = new Engine(p, en, rnd);
-        
+
         // We know, by looking at the formula,
         // that unit with 10 SPD will have AtbBarLength of 8000.
         p.Members.First().Atb.Should().Be(1);
@@ -572,24 +579,25 @@ public class EngineTests
     [InlineData(BattleSpeed.Medium, 16, Statuses.Haste)]
     [InlineData(BattleSpeed.Fast, 15, Statuses.None)]
     [InlineData(BattleSpeed.Fast, 10, Statuses.Slow)]
-    [InlineData(BattleSpeed.Fast,22, Statuses.Haste)]
-    public void Tick_Should_IncreaseAtbBar(BattleSpeed bs, int expected, Statuses status)
+    [InlineData(BattleSpeed.Fast, 22, Statuses.Haste)]
+    public void Tick_Should_IncreaseAtbBar(BattleSpeed bs, int expected,
+        Statuses status)
     {
-         var rnd = new MockRandomProvider(1);
-         var p = new Party
-         {
-             Members = new[] { DefaultUnit() }
-         };
- 
-         p.Members.First().AddStatus(status);
- 
-         var e = new Engine(p, new Enemies(), rnd)
-         {
-             BattleSpeed = bs
-         };
-         e.Tick();
-        
-         p.Members.First().Atb.Should().Be(expected);
+        var rnd = new MockRandomProvider(1);
+        var p = new Party
+        {
+            Members = new[] { DefaultUnit() }
+        };
+
+        p.Members.First().AddStatus(status);
+
+        var e = new Engine(p, new Enemies(), rnd)
+        {
+            BattleSpeed = bs
+        };
+        e.Tick();
+
+        p.Members.First().Atb.Should().Be(expected);
     }
 
 
@@ -607,6 +615,135 @@ public class EngineTests
 
         AttackResult attackInfo = e.Attack(attacker, target);
         attackInfo.Damage.Should().Be(451);
+    }
+
+    [Fact]
+    public void Magic_Should_Reflect_If_TargetHasReflect()
+    {
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+
+        Unit target = DefaultUnit();
+        target.Name = "B";
+        target.AddStatus(Statuses.Reflect);
+
+        var p = new Party
+        {
+            Members = new[] { attacker }
+        };
+
+        var en = new Enemies
+        {
+            Members = new[] { target }
+        };
+
+        var e = new Engine(p, en, rnd);
+        AttackResult attackInfo = e.Magic(attacker, target, "Fire");
+        attackInfo.Damage.Should().Be(154);
+        attackInfo.IsReflected.Should().BeTrue();
+        attackInfo.RefelectedTo!.Name.Should().Be("A");
+        attackInfo.Attacker.Name.Should().Be("A");
+        attackInfo.Target.Name.Should().Be("B");
+    }
+
+    [Fact]
+    public void
+        Magic_Should_Reflect_If_SomeEnemiesHaveReflect_WhileMultiTargetSpell_And_OnePlayer()
+    {
+        var rnd = new MockRandomProvider(1);
+        var p = new Party
+        {
+            Members = new[] { DefaultUnit() }
+        };
+        p.Members.First().Name = "A";
+
+        var en = new Enemies
+        {
+            Members = new[] { DefaultUnit(), DefaultUnit() }
+        };
+
+        en.Members.First().AddStatus(Statuses.Reflect);
+        en.Members.First().Name = "B";
+
+        var e = new Engine(p, en, rnd);
+        IEnumerable<AttackResult> attackInfo =
+            e.Magic(p.Members.First(), en.Members, "Fire");
+
+        // One enemy should suffer damage 
+        // Other one should reflect and deal full damage if there only
+        // one character that to receive damage.
+
+        AttackResult first = attackInfo.First();
+        first.Damage.Should().Be(154);
+        first.IsReflected.Should().BeTrue();
+        first.RefelectedTo!.Name.Should().Be("A");
+        first.Attacker.Name.Should().Be("A");
+        first.Target.Name.Should().Be("B");
+
+        AttackResult second = attackInfo.Last();
+        second.Damage.Should().Be(70);
+        second.Attacker.Should().Be(p.Members.First());
+        second.Target.Should().Be(en.Members.Last());
+    }
+
+    [Fact]
+    public void
+        Magic_Should_Reflect_If_SomeEnemiesHaveReflect_WhileMultiTargetSpell_And_ManyPlayers()
+    {
+        /* Setup here is as follows:
+            - Two player's units
+            - Two Ai's units (one with Reflect)
+            - First player's unit casts fire (multi target)
+            - First Ai's unit (with Reflect) reflects spell as single target
+               onto random player
+            - Second Ai's unit receive damage.
+        */
+        var rnd = new MockRandomProvider(1);
+        var p = new Party
+        {
+            Members = new[] { DefaultUnit(), DefaultUnit() }
+        };
+        p.Members.First().Name = "A";
+        p.Members.First().CurrentHp = 100;
+        p.Members.Last().Name = "B";
+        p.Members.Last().CurrentHp = 100;
+
+        var en = new Enemies
+        {
+            Members = new[] { DefaultUnit(), DefaultUnit() }
+        };
+
+        en.Members.First().AddStatus(Statuses.Reflect);
+        en.Members.First().Name = "C";
+        en.Members.First().CurrentHp = 100;
+        en.Members.First().IsAi = true;
+
+        en.Members.Last().IsAi = true;
+
+        var e = new Engine(p, en, rnd);
+        IEnumerable<AttackResult> attackInfo =
+            e.Magic(p.Members.First(), en.Members, "Fire");
+
+        // One enemy should suffer damage 
+        // Other one should reflect and deal full damage if there only
+        // one character that to receive damage.
+
+        AttackResult first = attackInfo.First();
+        first.Damage.Should().Be(70);
+        first.IsReflected.Should().BeTrue();
+
+        // To whom spell is reflected should be decided randomly.
+        // In current setup, with RND = 1 it will be always player B who
+        // receives damage.
+        first.RefelectedTo!.Name.Should().Be("B");
+        first.Attacker.Name.Should().Be("A");
+        first.Target.Name.Should().Be("C");
+
+        AttackResult second = attackInfo.Last();
+        second.Damage.Should().Be(70);
+        second.Attacker.Should().Be(p.Members.First());
+        second.Target.Should().Be(en.Members.Last());
     }
 }
 

@@ -11,7 +11,8 @@ public class Engine
     {
     }
 
-    public Engine(IRandomProvider randomProvider) : this(new Party(), new Enemies(), randomProvider)
+    public Engine(IRandomProvider randomProvider) : this(new Party(),
+        new Enemies(), randomProvider)
     {
     }
 
@@ -98,7 +99,8 @@ public class Engine
             int accuracy = attacker.Equipment.Weapon.StatusAccuracy;
             if (accuracy > rnd % 100)
             {
-                result.ApplicableStatuses |= attacker.Equipment.Weapon.StatusAffix;
+                result.ApplicableStatuses |=
+                    attacker.Equipment.Weapon.StatusAffix;
             }
         }
 
@@ -113,9 +115,11 @@ public class Engine
         return result;
     }
 
-    private static int ApplyMultiplier(Unit attacker, Unit target, int bonus, bool isCritical)
+    private static int ApplyMultiplier(Unit attacker, Unit target, int bonus,
+        bool isCritical)
     {
-        if (target.EnemyType.HasFlag(EnemyType.Human) && attacker.Abilities.HasFlag(Sa.ManEater))
+        if (target.EnemyType.HasFlag(EnemyType.Human) &&
+            attacker.Abilities.HasFlag(Sa.ManEater))
         {
             bonus = (int)Math.Floor(bonus * 1.5);
         }
@@ -186,7 +190,8 @@ public class Engine
         {
             bonus = (int)(bonus * 1.5);
 
-            if (attacker.Equipment.HasElemAtk(attacker.Equipment.Weapon.ElementalAffix))
+            if (attacker.Equipment.HasElemAtk(attacker.Equipment.Weapon
+                    .ElementalAffix))
             {
                 bonus = (int)(bonus * 1.5);
             }
@@ -200,14 +205,17 @@ public class Engine
         return bonus;
     }
 
-    private (int @base, int bonus) CalculateAttackDamageParts(Unit attacker, Unit target)
+    private (int @base, int bonus) CalculateAttackDamageParts(Unit attacker,
+        Unit target)
     {
         int @base;
         int rnd = _randomProvider.Next();
         if (attacker.IsAi)
         {
             @base = Math.Max(1, attacker.Atk - target.Def);
-            var bonus = (int)(attacker.Str + rnd % (Math.Floor((attacker.Lvl + attacker.Str) / 4.0) + 1));
+            var bonus = (int)(attacker.Str +
+                              rnd % (Math.Floor((attacker.Lvl + attacker.Str) /
+                                                4.0) + 1));
             return (@base, bonus);
         }
 
@@ -246,29 +254,42 @@ public class Engine
             return (@base, (int)bonus);
         }
 
-        if (attacker.Equipment.Weapon.WeaponType is WeaponType.KnightSword or WeaponType.TheifSword)
+        if (attacker.Equipment.Weapon.WeaponType is WeaponType.KnightSword
+            or WeaponType.TheifSword)
         {
             var b1 = (int)Math.Floor((attacker.Str + attacker.Spr) / 2.0);
-            var b2 = (int)(rnd % (Math.Floor((attacker.Lvl + attacker.Str) / 8.0) + 1));
+            var b2 = (int)(rnd %
+                           (Math.Floor((attacker.Lvl + attacker.Str) / 8.0) +
+                            1));
             int bonus = b1 + b2;
             return (@base, bonus);
         }
 
-        if (attacker.Equipment.Weapon.WeaponType is WeaponType.Hammer or WeaponType.Fork)
+        if (attacker.Equipment.Weapon.WeaponType is WeaponType.Hammer
+            or WeaponType.Fork)
         {
             var bonus = (int)(rnd % (1 + attacker.Str - 1) + 1 +
-                              rnd % Math.Floor((attacker.Lvl + attacker.Str) / 8.0));
+                              rnd % Math.Floor((attacker.Lvl + attacker.Str) /
+                                               8.0));
             return (@base, bonus);
         }
 
         if (attacker.Equipment.Weapon.WeaponType is WeaponType.Racket)
         {
             var bonus = (int)(Math.Floor((attacker.Str + attacker.Spd) / 2.0) +
-                              rnd % (Math.Floor((attacker.Lvl + attacker.Str) / 8.0) + 1));
+                              rnd % (Math.Floor((attacker.Lvl + attacker.Str) /
+                                                8.0) + 1));
             return (@base, bonus);
         }
 
         return (0, 0);
+    }
+
+    public IEnumerable<AttackResult> Magic(Unit attacker,
+        IEnumerable<Unit> targets, string spellName)
+    {
+        return targets.Select(
+            target => Magic(attacker, target, spellName, true));
     }
 
     public AttackResult Magic(Unit attacker, Unit target, string spellName)
@@ -276,32 +297,75 @@ public class Engine
         return Magic(attacker, target, spellName, false);
     }
 
-    private AttackResult Magic(Unit attacker, Unit target, string spellName, bool isMultiTarget)
+    private AttackResult Magic(Unit attacker, Unit target, string spellName,
+        bool isMultiTarget)
     {
         int rnd = _randomProvider.Next();
         Spell spell = GetSpell(spellName);
+        var attackResult = new AttackResult
+        {
+            Attacker = attacker,
+            Target = target
+        };
+
+        // If target has Reflect status then the spell will be
+        // reflected back to someone from opposing team.
+        if (target.Statuses.HasFlag(Statuses.Reflect))
+        {
+            attackResult.IsReflected = true;
+            // If target reflects spell to a party/enemy group which has only
+            // one alive member then is is no longer a multi target spell
+            // and such penalty can be lifted.
+
+            if (attacker.IsAi)
+            {
+                if (Enemies.AliveCount == 1)
+                {
+                    attackResult.RefelectedTo = Enemies.Members.First();
+                    isMultiTarget = false;
+                }
+                else
+                {
+                    int index = rnd % Enemies.AliveCount;
+                    attackResult.RefelectedTo =
+                        Enemies.Members.ToArray()[index];
+                }
+            }
+            else
+            {
+                if (Party.AliveCount == 1)
+                {
+                    attackResult.RefelectedTo = Party.Members.First();
+                    isMultiTarget = false;
+                }
+                else
+                {
+                    int index = rnd % Party.AliveCount;
+                    attackResult.RefelectedTo = Party.Members.ToArray()[index];
+                }
+            }
+
+            target = attackResult.RefelectedTo;
+        }
 
         if (target.IsImmuneTo(spell.ElementalAffix))
         {
-            return new AttackResult
-            {
-                Attacker = attacker,
-                Target = target
-            };
+            attackResult.Damage = 0;
+            return attackResult;
         }
 
         int @base = spell.Power - target.MagDef;
-        var bonus = (int)(attacker.Mag + rnd % (Math.Floor((attacker.Lvl + attacker.Mag) / 8.0) + 1));
+        var bonus = (int)(attacker.Mag +
+                          rnd % (Math.Floor((attacker.Lvl + attacker.Mag) /
+                                            8.0) + 1));
 
+        // When target absorbs elemental damage is should
+        // be healed by the amount indicated in the damage.
         if (target.AbsorbsElemental(spell.ElementalAffix))
         {
-            return new AttackResult
-            {
-                Attacker = attacker,
-                Target = target,
-                TargetAbsorbed = true,
-                Damage = @base * bonus
-            };
+            attackResult.TargetAbsorbed = true;
+            attackResult.Damage = @base * bonus;
+            return attackResult;
         }
 
         if (spell.Name == "Demi")
@@ -342,15 +406,9 @@ public class Engine
 
         // Bonus value never can be 0.
         bonus = Math.Max(1, bonus);
+        attackResult.Damage = @base * bonus;
 
-        var result = new AttackResult
-        {
-            Attacker = attacker,
-            Target = target,
-            Damage = @base * bonus
-        };
-
-        return result;
+        return attackResult;
     }
 
     private static AttackResult SpellDemi(Unit attacker, Unit target, int rnd)
@@ -396,25 +454,28 @@ public class Engine
         return spellNameToSpell[spellName];
     }
 
-    public IEnumerable<AttackResult> Magic(Unit attacker, IEnumerable<Unit> targets, string spellName)
-    {
-        return targets.Select(target => Magic(attacker, target, spellName, true));
-    }
 
     /// <summary>
-    ///     Party attempts to flee from the battle. Chance of running away is affected by party's
-    ///     average level (KO included) and the average level of the enemies (dead monsters not included).
+    ///     Party attempts to flee from the battle. Chance of running away is affected
+    ///     by party's
+    ///     average level (KO included) and the average level of the enemies (dead
+    ///     monsters not included).
     /// </summary>
-    /// <returns><c>true</c> if attempt is successful and party can run away, otherwise <c>false</c></returns>
+    /// <returns>
+    ///     <c>true</c> if attempt is successful and party can run away, otherwise
+    ///     <c>false</c>
+    /// </returns>
     public bool Escape()
     {
-        var chance = (int)Math.Floor(Party.AvgLvl * Math.Floor(200.0 / Enemies.AliveAvgLvl) / 16.0);
+        var chance = (int)Math.Floor(Party.AvgLvl *
+            Math.Floor(200.0 / Enemies.AliveAvgLvl) / 16.0);
         int rnd = _randomProvider.Next();
         return rnd % 100 < chance;
     }
 
     /// <summary>
-    ///     Initializes the battle by setting the ATB of all units according to formula.
+    ///     Initializes the battle by setting the ATB of all units according to
+    ///     formula.
     /// </summary>
     private void InitializeAtb()
     {
@@ -452,8 +513,12 @@ public class Engine
 
         foreach (Unit u in Party.Members)
         {
-            increment = u.Statuses.HasFlag(Statuses.Slow) ? (int)Math.Floor(increment * 0.66) : increment;
-            increment = u.Statuses.HasFlag(Statuses.Haste) ? (int)Math.Floor(increment * 1.5) : increment;
+            increment = u.Statuses.HasFlag(Statuses.Slow)
+                ? (int)Math.Floor(increment * 0.66)
+                : increment;
+            increment = u.Statuses.HasFlag(Statuses.Haste)
+                ? (int)Math.Floor(increment * 1.5)
+                : increment;
             u.Atb += increment;
         }
 
@@ -479,6 +544,11 @@ public class Enemies
     {
         get => Members.Where(u => u.IsAlive).Average(u => u.Lvl);
     }
+
+    public int AliveCount
+    {
+        get => Members.Count(u => u.IsAlive);
+    }
 }
 
 public class Party
@@ -488,6 +558,11 @@ public class Party
     public double AvgLvl
     {
         get => Members.Average(u => u.Lvl);
+    }
+
+    public int AliveCount
+    {
+        get => Members.Count(u => u.IsAlive);
     }
 }
 
@@ -514,8 +589,10 @@ public class AttackResult
     public bool IsCounterAttack { get; set; }
     public Statuses ApplicableStatuses { get; set; }
     public bool TargetAbsorbed { get; set; }
-    public Unit Attacker { get; init; }
-    public Unit Target { get; init; }
+    public Unit Attacker { get; set; }
+    public Unit Target { get; set; }
+    public bool IsReflected { get; set; }
+    public Unit? RefelectedTo { get; set; }
 
     public override string ToString()
     {
@@ -726,7 +803,8 @@ public enum Statuses
     Silence = 2 << 12,
     Shell = 2 << 13,
     Slow = 2 << 14,
-    Haste = 2 << 15
+    Haste = 2 << 15,
+    Reflect = 2 << 16
 }
 
 public class Equipment
@@ -761,7 +839,8 @@ public class Equipment
 
     public int TotalMagDefBonus
     {
-        get => Weapon.MagDef + Head.MagDef + Wrist.MagDef + Armor.MagDef + Accessory.MagDef;
+        get => Weapon.MagDef + Head.MagDef + Wrist.MagDef + Armor.MagDef +
+               Accessory.MagDef;
     }
 
     public int TotalAtkBonus
@@ -776,7 +855,8 @@ public class Equipment
 
     public int TotalMagEvaBonus
     {
-        get => Weapon.MagEva + Head.MagEva + Wrist.MagEva + Armor.MagEva + Accessory.MagEva;
+        get => Weapon.MagEva + Head.MagEva + Wrist.MagEva + Armor.MagEva +
+               Accessory.MagEva;
     }
 
     public int TotalDefBonus
