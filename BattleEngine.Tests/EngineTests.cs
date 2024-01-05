@@ -834,7 +834,7 @@ public class EngineTests
         u1.Name = "A";
         u1.CurrentHp = 100;
         u1.AddStatus(Statuses.Reflect);
-        
+
         Unit u2 = DefaultUnit();
         u2.Name = "B";
         u2.CurrentHp = 100;
@@ -849,7 +849,7 @@ public class EngineTests
         u4.Name = "D";
         u4.CurrentHp = 100;
         u4.AddStatus(Statuses.Reflect);
-        
+
         Unit target = DefaultUnit();
         target.Name = "E";
         target.CurrentHp = 100;
@@ -868,7 +868,7 @@ public class EngineTests
         var e = new Engine(p, en, rnd);
         IEnumerable<AttackResult> attackInfo = e.Magic(
             p.Members.First(),
-            p.Members, 
+            p.Members,
             "Fire");
 
         attackInfo.Should().HaveCount(4);
@@ -879,7 +879,7 @@ public class EngineTests
             x.RefelectedTo!.Name.Should().Be("E");
             x.Damage.Should().Be(154);
         });
-        
+
         attackInfo.ToArray()[0].Target.Name.Should().Be("A");
         attackInfo.ToArray()[1].Target.Name.Should().Be("B");
         attackInfo.ToArray()[2].Target.Name.Should().Be("C");
@@ -911,6 +911,66 @@ public class EngineTests
         var e = new Engine(p, en, rnd);
         AttackResult attackInfo = e.Magic(attacker, attacker, "Fire");
         attackInfo.Damage.Should().Be(308);
+    }
+
+    [Fact]
+    public void TranceBar_Should_BeIncreased_When_DamageReceived()
+    {
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        Unit target = DefaultUnit();
+
+        var e = new Engine(rnd);
+        AttackResult attackResult = e.Attack(attacker, target);
+        attackResult.TranceIncrease.Should().Be(1);
+
+        attackResult = e.Magic(attacker, target, "Fire");
+        attackResult.TranceIncrease.Should().Be(1);
+    }
+
+    [Fact]
+    public void
+        Trance_Should_BeIncreased_When_DamageReceived_With_StatusHighTide()
+    {
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        Unit target = DefaultUnit();
+        target.AddStatus(Statuses.HighTide);
+
+        var e = new Engine(rnd);
+        AttackResult attackResult = e.Attack(attacker, target);
+        attackResult.TranceIncrease.Should().Be(target.Spr);
+    }
+
+    [Fact]
+    public void Trance_Should_NotBeIncreased_When_TargetIsAi()
+    {
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        Unit target = DefaultUnit();
+        target.IsAi = true;
+
+        var e = new Engine(rnd);
+        AttackResult attackResult = e.Attack(attacker, target);
+        attackResult.TranceIncrease.Should().Be(0);
+    }
+
+    [Fact]
+    public void Trance_Should_Decrease_When_AttackerIsInTrance_And_TakesTurn()
+    {
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        attacker.IsInTrance = true;
+        attacker.Trance = attacker.TranceBarLength;
+        Unit target = DefaultUnit();
+        target.IsAi = true;
+
+        var e = new Engine(rnd);
+        AttackResult attackResult = e.Attack(attacker, target);
+        attackResult.TranceDecrease.Should().Be(34);
+
+        attackResult = e.Magic(attacker, target, "Fire");
+        attackResult.TranceDecrease.Should().Be(34);
     }
 }
 

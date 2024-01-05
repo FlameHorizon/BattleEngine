@@ -112,7 +112,33 @@ public class Engine
             : target.Spr >= rnd % 100;
         result.IsCounterAttack = isCounterAttack;
 
+        if (attacker.IsInTrance)
+        {
+            result.TranceDecrease =
+                (int)(Math.Floor((300.0 - attacker.Lvl) / attacker.Spr)
+                    * 10.0 % 256);
+        }
+
+        if (target.IsAi == false)
+        {
+            result.TranceIncrease = CalculateTranceIncrease(target);
+        }
+
         return result;
+    }
+
+    /// <summary>
+    ///     Calculate the increase of Trance gauge.
+    ///     Don't increase the Trance if this is a Ai controlled unit.
+    /// </summary>
+    /// <param name="target">Unit for which trance bar should be increased.</param>
+    /// <returns></returns>
+    private int CalculateTranceIncrease(Unit target)
+    {
+        int rnd = _randomProvider.Next();
+        return target.Statuses.HasFlag(Statuses.HighTide)
+            ? target.Spr
+            : rnd % target.Spr;
     }
 
     private static int ApplyMultiplier(Unit attacker, Unit target, int bonus,
@@ -285,6 +311,13 @@ public class Engine
         return (0, 0);
     }
 
+    /// <summary>
+    ///     Allows to cast any type of Magic onto multiple targets.
+    /// </summary>
+    /// <param name="attacker">Source of the spell</param>
+    /// <param name="targets">Targets of the spell</param>
+    /// <param name="spellName">Name of the spell to cast.</param>
+    /// <returns>Result of the casting magic on the targets.</returns>
     public IEnumerable<AttackResult> Magic(Unit attacker,
         IEnumerable<Unit> targets, string spellName)
     {
@@ -292,6 +325,14 @@ public class Engine
             target => Magic(attacker, target, spellName, true));
     }
 
+    /// <summary>
+    ///     Allows to cast any type of Magic onto target. Spell will be casted
+    ///     on a single target.
+    /// </summary>
+    /// <param name="attacker">Source of the spell</param>
+    /// <param name="target">Target of the spell</param>
+    /// <param name="spellName">Name of the spell to cast.</param>
+    /// <returns>Result of the casting magic on the target.</returns>
     public AttackResult Magic(Unit attacker, Unit target, string spellName)
     {
         return Magic(attacker, target, spellName, false);
@@ -304,7 +345,7 @@ public class Engine
     {
         int rnd = _randomProvider.Next();
         Spell spell = GetSpell(spellName);
-        var attackResult = new AttackResult
+        var result = new AttackResult
         {
             Attacker = attacker,
             Target = target
@@ -313,13 +354,13 @@ public class Engine
         // Determine if target has Reflect2x status before we do any changes
         // to the AttackResult instance.
         bool targetHasReflect2x = target.Statuses.HasFlag(Statuses.Reflect2x);
-        
+
         // If target has Reflect status then the spell will be
         // reflected back to someone from opposing team.
-        if (target.Statuses.HasFlag(Statuses.Reflect) 
+        if (target.Statuses.HasFlag(Statuses.Reflect)
             || target.Statuses.HasFlag(Statuses.Reflect2x))
         {
-            attackResult.IsReflected = true;
+            result.IsReflected = true;
             // If target reflects spell to a party/enemy group which has only
             // one alive member then is is no longer a multi target spell
             // and such penalty can be lifted.
@@ -358,14 +399,14 @@ public class Engine
                 reflectTo = group.ToArray()[index];
             }
 
-            attackResult.RefelectedTo = reflectTo;
+            result.RefelectedTo = reflectTo;
             target = reflectTo;
         }
 
         if (target.IsImmuneTo(spell.ElementalAffix))
         {
-            attackResult.Damage = 0;
-            return attackResult;
+            result.Damage = 0;
+            return result;
         }
 
         int @base = spell.Power - target.MagDef;
@@ -377,14 +418,14 @@ public class Engine
         {
             bonus *= 2;
         }
-        
+
         // When target absorbs elemental damage is should
         // be healed by the amount indicated in the damage.
         if (target.AbsorbsElemental(spell.ElementalAffix))
         {
-            attackResult.TargetAbsorbed = true;
-            attackResult.Damage = @base * bonus;
-            return attackResult;
+            result.TargetAbsorbed = true;
+            result.Damage = @base * bonus;
+            return result;
         }
 
         if (spell.Name == "Demi")
@@ -425,9 +466,21 @@ public class Engine
 
         // Bonus value never can be 0.
         bonus = Math.Max(1, bonus);
-        attackResult.Damage = @base * bonus;
+        result.Damage = @base * bonus;
 
-        return attackResult;
+        if (attacker.IsInTrance)
+        {
+            result.TranceDecrease =
+                (int)(Math.Floor((300.0 - attacker.Lvl) / attacker.Spr)
+                    * 10.0 % 256);
+        }
+
+        if (target.IsAi == false)
+        {
+            result.TranceIncrease = CalculateTranceIncrease(target);
+        }
+
+        return result;
     }
 
     private static AttackResult SpellDemi(Unit attacker, Unit target, int rnd)
@@ -613,6 +666,16 @@ public class AttackResult
     public bool IsReflected { get; set; }
     public Unit? RefelectedTo { get; set; }
 
+    /// <summary>
+    ///     Indicates the amount of which Trance bar should be increased by.
+    /// </summary>
+    public int TranceIncrease { get; set; }
+
+    /// <summary>
+    ///     Indicate the amount of which Trance bar should be decreased by.
+    /// </summary>
+    public int TranceDecrease { get; set; }
+
     public override string ToString()
     {
         var sb = new StringBuilder();
@@ -723,6 +786,19 @@ public class Unit
 
     public int Atb { get; set; }
 
+    public int TranceBarLength
+    {
+        get => 255;
+    }
+
+    /// <summary>
+    ///     Trance accumulates as enemies attack the character,
+    ///     filling the gauge.
+    /// </summary>
+    public int Trance { get; set; }
+
+    public bool IsInTrance { get; set; }
+
     public void AddStatus(Statuses status)
     {
         Statuses |= status;
@@ -824,7 +900,8 @@ public enum Statuses
     Slow = 2 << 14,
     Haste = 2 << 15,
     Reflect = 2 << 16,
-    Reflect2x = 2 << 17
+    Reflect2x = 2 << 17,
+    HighTide = 2 << 18
 }
 
 public class Equipment

@@ -8,7 +8,7 @@ This battle engine strives to implement all of the login which is in video game 
 - [x] Running Away
 - [x] Attack Command
 - [x] Damage Alterations
-- [ ] Trance
+- [ ] Trance (did not implement specific skills yet)
 - [ ] Black Magic
 - [ ] Status Effect
 - [ ] White Magic
