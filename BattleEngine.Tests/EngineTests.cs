@@ -583,12 +583,30 @@ public class EngineTests
  
          p.Members.First().AddStatus(status);
  
-         var e = new Engine(p, new Enemies(), rnd);
-         e.BattleSpeed = bs; 
+         var e = new Engine(p, new Enemies(), rnd)
+         {
+             BattleSpeed = bs
+         };
          e.Tick();
         
          p.Members.First().Atb.Should().Be(expected);
-         
+    }
+
+
+    [Fact]
+    public void Attack_Should_BeInverted_When_InIpsensCastle()
+    {
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        Unit target = DefaultUnit();
+
+        var e = new Engine(rnd)
+        {
+            IsInIpsensCastle = true
+        };
+
+        AttackResult attackInfo = e.Attack(attacker, target);
+        attackInfo.Damage.Should().Be(451);
     }
 }
 

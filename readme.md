@@ -7,7 +7,7 @@ This battle engine strives to implement all of the login which is in video game 
 - [x] ATB
 - [x] Running Away
 - [x] Attack Command
-- [ ] Damage Alterations, missing Ipsen's Castle and Reflect.
+- [ ] Damage Alterations, missing Reflect.
 - [ ] Trance
 - [ ] Black Magic
 - [ ] Status Effect

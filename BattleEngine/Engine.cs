@@ -11,7 +11,7 @@ public class Engine
     {
     }
 
-    public Engine(IRandomProvider randomProvider): this(new Party(), new Enemies(), randomProvider)
+    public Engine(IRandomProvider randomProvider) : this(new Party(), new Enemies(), randomProvider)
     {
     }
 
@@ -20,13 +20,14 @@ public class Engine
         Party = party;
         Enemies = enemies;
         _randomProvider = randomProvider;
-        
+
         InitializeAtb();
     }
 
     public Party Party { get; set; }
     public Enemies Enemies { get; set; }
     public BattleSpeed BattleSpeed { get; set; }
+    public bool IsInIpsensCastle { get; set; }
 
     public AttackResult Attack(Unit attacker, Unit target)
     {
@@ -201,10 +202,11 @@ public class Engine
 
     private (int @base, int bonus) CalculateAttackDamageParts(Unit attacker, Unit target)
     {
+        int @base;
         int rnd = _randomProvider.Next();
         if (attacker.IsAi)
         {
-            int @base = Math.Max(1, attacker.Atk - target.Def);
+            @base = Math.Max(1, attacker.Atk - target.Def);
             var bonus = (int)(attacker.Str + rnd % (Math.Floor((attacker.Lvl + attacker.Str) / 4.0) + 1));
             return (@base, bonus);
         }
@@ -220,20 +222,25 @@ public class Engine
             WeaponType.Flute
         };
 
-
         // Because Save The Queen is also a KnightSword we need to check it first
         // to avoid calculating the wrong damage. Beatrix.
         if (attacker.Equipment.Weapon.Name == "Save The Queen")
         {
-            int @base = attacker.Atk + attacker.Lvl - target.Def;
+            @base = attacker.Atk + attacker.Lvl - target.Def;
             var bonus = (int)(attacker.Str + rnd %
                 (Math.Floor((attacker.Lvl + attacker.Str) / 8.0) + 1));
             return (@base, bonus);
         }
 
+        // Since Beatrix will never be in Ipsen's Castle we don't have to
+        // invert her base damage calculation which make whole process that much easier.
+        // Also Ipsen' Castle thing does not apply to AI controlled units.
+        @base = IsInIpsensCastle
+            ? 60 - attacker.Atk - target.Def
+            : attacker.Atk - target.Def;
+
         if (standardWeapons.Contains(attacker.Equipment.Weapon.WeaponType))
         {
-            int @base = attacker.Atk - target.Def;
             double bonus = attacker.Str + rnd %
                 (Math.Floor((attacker.Lvl + attacker.Str) / 8.0) + 1);
             return (@base, (int)bonus);
@@ -241,7 +248,6 @@ public class Engine
 
         if (attacker.Equipment.Weapon.WeaponType is WeaponType.KnightSword or WeaponType.TheifSword)
         {
-            int @base = attacker.Atk - target.Def;
             var b1 = (int)Math.Floor((attacker.Str + attacker.Spr) / 2.0);
             var b2 = (int)(rnd % (Math.Floor((attacker.Lvl + attacker.Str) / 8.0) + 1));
             int bonus = b1 + b2;
@@ -250,7 +256,6 @@ public class Engine
 
         if (attacker.Equipment.Weapon.WeaponType is WeaponType.Hammer or WeaponType.Fork)
         {
-            int @base = attacker.Atk - target.Def;
             var bonus = (int)(rnd % (1 + attacker.Str - 1) + 1 +
                               rnd % Math.Floor((attacker.Lvl + attacker.Str) / 8.0));
             return (@base, bonus);
@@ -258,7 +263,6 @@ public class Engine
 
         if (attacker.Equipment.Weapon.WeaponType is WeaponType.Racket)
         {
-            int @base = attacker.Atk - target.Def;
             var bonus = (int)(Math.Floor((attacker.Str + attacker.Spd) / 2.0) +
                               rnd % (Math.Floor((attacker.Lvl + attacker.Str) / 8.0) + 1));
             return (@base, bonus);
@@ -410,7 +414,7 @@ public class Engine
     }
 
     /// <summary>
-    ///    Initializes the battle by setting the ATB of all units according to formula.
+    ///     Initializes the battle by setting the ATB of all units according to formula.
     /// </summary>
     private void InitializeAtb()
     {
@@ -418,7 +422,7 @@ public class Engine
         {
             u.Atb = CalcInitialAtb(u.AtbBarLength);
         }
-        
+
         foreach (Unit u in Enemies.Members)
         {
             u.Atb = CalcInitialAtb(u.AtbBarLength);
@@ -445,14 +449,14 @@ public class Engine
             BattleSpeed.Fast => 14,
             _ => throw new ArgumentOutOfRangeException()
         };
-        
+
         foreach (Unit u in Party.Members)
         {
             increment = u.Statuses.HasFlag(Statuses.Slow) ? (int)Math.Floor(increment * 0.66) : increment;
             increment = u.Statuses.HasFlag(Statuses.Haste) ? (int)Math.Floor(increment * 1.5) : increment;
             u.Atb += increment;
         }
-        
+
         foreach (Unit u in Enemies.Members)
         {
             u.Atb += increment;
@@ -615,7 +619,12 @@ public class Unit
     }
 
     public int CurrentHp { get; set; }
-    public int AtbBarLength => (60 - Spd) * 160;
+
+    public int AtbBarLength
+    {
+        get => (60 - Spd) * 160;
+    }
+
     public int Atb { get; set; }
 
     public void AddStatus(Statuses status)
@@ -698,7 +707,7 @@ public enum EnemyType
 }
 
 [Flags]
-public enum Statuses : int
+public enum Statuses
 {
     None = 0,
     Confuse = 1,
