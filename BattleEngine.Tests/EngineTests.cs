@@ -961,7 +961,7 @@ public class EngineTests
         var rnd = new MockRandomProvider(1);
         Unit attacker = DefaultUnit();
         attacker.AddStatus(Statuses.Trance);
-        
+
         attacker.Trance = attacker.TranceBarLength;
         Unit target = DefaultUnit();
         target.IsAi = true;
@@ -982,7 +982,7 @@ public class EngineTests
         attacker.Name = "Stainer";
         attacker.AddStatus(Statuses.Trance);
         attacker.Trance = attacker.TranceBarLength;
-        attacker.Equipment.Weapon = new Weapon()
+        attacker.Equipment.Weapon = new Weapon
         {
             Name = "Blood Sword",
             Atk = 24,
@@ -995,6 +995,107 @@ public class EngineTests
         var e = new Engine(rnd);
         AttackResult attackResult = e.Attack(attacker, target);
         attackResult.Damage.Should().Be(240);
+    }
+
+    [Fact]
+    public void Magic_Should_DrainMp_When_OsmoseCasted()
+    {
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        Unit target = DefaultUnit();
+
+        var e = new Engine(rnd);
+        AttackResult attackResult = e.Magic(attacker, target, "Osmose");
+
+        attackResult.Damage.Should().Be(0);
+        attackResult.IsMpRestored.Should().BeTrue();
+        attackResult.RestoredMp.Should().Be(41);
+    }
+
+    [Fact]
+    public void Magic_Should_DrainHp_When_DrainCasted()
+    {
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        Unit target = DefaultUnit();
+
+        var e = new Engine(rnd);
+        AttackResult attackResult = e.Magic(attacker, target, "Drain");
+
+        attackResult.Damage.Should().Be(352);
+        attackResult.IsHpRestored.Should().BeTrue();
+        attackResult.HpRestored.Should().Be(352);
+    }
+
+    [Fact]
+    public void Magic_Should_ReverseDrain_When_TargetIsUndead()
+    {
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+
+        Unit target = DefaultUnit();
+        target.Name = "B";
+        target.EnemyType = EnemyType.Undead;
+
+        var e = new Engine(rnd);
+        AttackResult attackResult = e.Magic(attacker, target, "Drain");
+
+        attackResult.Damage.Should().Be(352);
+        attackResult.Attacker.Name.Should().Be("A");
+        attackResult.Target.Name.Should().Be("B");
+        attackResult.IsReflected.Should().BeTrue();
+        attackResult.RefelectedTo.Name.Should().Be("A");
+        attackResult.IsHpRestored.Should().BeTrue();
+        attackResult.HpRestored.Should().Be(352);
+    }
+
+    [Fact]
+    public void Magic_Should_InflictPoison_When_BioCasted()
+    {
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+
+        Unit target = DefaultUnit();
+
+        var e = new Engine(rnd);
+        AttackResult attackResult = e.Magic(attacker, target, "Bio");
+
+        attackResult.Damage.Should().Be(0);
+        attackResult.InflictStatus.First().Should()
+            .Be((Statuses.Poison, target));
+    }
+
+    [Fact]
+    public void Magic_Should_InflictPoison_When_BioCastedAsMultiTarget()
+    {
+        var rnd = new MockRandomProvider(1);
+        var p = new Party()
+        {
+            Members = new[] { DefaultUnit() }
+        };
+
+        var en1 = DefaultUnit();
+        en1.Name = "B";
+        var en2 = DefaultUnit();
+        en2.Name = "C";
+        var en = new Enemies()
+        {
+            Members = new[] {en1, en2}
+        };
+
+        var e = new Engine(p, en, rnd);
+        IEnumerable<AttackResult> attackResult = e.Magic(p.Members.First(), en.Members, "Bio");
+        attackResult.Should().HaveCount(2);
+        
+        List<(Statuses Status, Unit Unit)> inflict = attackResult.First().InflictStatus;
+        inflict.First().Status.Should().Be(Statuses.Poison);
+        inflict.First().Unit.Name.Should().Be(en1.Name);
+
+        inflict = attackResult.ToArray()[1].InflictStatus;
+        inflict.First().Status.Should().Be(Statuses.Poison);
+        inflict.First().Unit.Name.Should().Be(en2.Name);
+
     }
 }
 

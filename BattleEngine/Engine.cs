@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System.Collections;
+using System.Runtime.InteropServices.ComTypes;
+using System.Text;
 using BattleEngine.Equipments;
 using BattleEngine.Spells;
 
@@ -403,18 +405,13 @@ public class Engine
             target = reflectTo;
         }
 
-        int @base = spell.Power - target.MagDef;
-        @base = Math.Max(1, @base);
-
-        (int bonus, bool isMiss) =
-            spell.CalculateBonus(attacker, target, isMultiTarget, rnd);
-
+        spell.UpdateDamageParts(ref result, rnd, isMultiTarget);
         if (targetHasReflect2X)
         {
-            bonus *= 2;
+            result.Bonus *= 2;
         }
 
-        if (isMiss)
+        if (result.IsMiss)
         {
             result.IsMiss = true;
             result.Damage = 0;
@@ -428,11 +425,11 @@ public class Engine
         else if (target.AbsorbsElemental(spell.ElementalAffix))
         {
             result.TargetAbsorbed = true;
-            result.Damage = @base * bonus;
+            result.Damage = result.Base * result.Bonus;
         }
         else
         {
-            result.Damage = @base * bonus;
+            result.Damage = result.Base * result.Bonus;
         }
 
         if (attacker.Statuses.HasFlag(Statuses.Trance))
@@ -455,7 +452,10 @@ public class Engine
         var spellNameToSpell = new Dictionary<string, SpellBase>
         {
             { "Fire", new Fire() },
-            { "Demi", new Demi() }
+            { "Demi", new Demi() },
+            { "Osmose", new Osmose() },
+            { "Drain", new Drain() },
+            { "Bio", new Bio()}
             /*
             { "Fire", new Spell("Fire", 14, Elements.Fire) },
             { "Fira", new Spell("Fira", 29, Elements.Fire) },
@@ -640,6 +640,13 @@ public class AttackResult
     /// </summary>
     public int TranceDecrease { get; set; }
 
+    public int Bonus { get; set; }
+    public int Base { get; set; }
+    public bool IsMpRestored { get; set; }
+    public int RestoredMp { get; set; }
+    public bool IsHpRestored { get; set; }
+    public int HpRestored { get; set; }
+
     public override string ToString()
     {
         var sb = new StringBuilder();
@@ -654,6 +661,8 @@ public class AttackResult
 
         return sb.ToString();
     }
+
+    public readonly List<(Statuses Status, Unit Unit)> InflictStatus = [];
 }
 
 public class Unit
@@ -706,7 +715,7 @@ public class Unit
     }
 
     public Statuses Statuses { get; private set; }
-    public EnemyType EnemyType { get; init; } = EnemyType.None;
+    public EnemyType EnemyType { get; set; } = EnemyType.None;
 
     public Sa Abilities { get; private set; }
     public string Name { get; set; } = string.Empty;
@@ -839,7 +848,8 @@ public enum EnemyType
 {
     None = 0,
     Human = 1,
-    Normal = 2
+    Normal = 2,
+    Undead = 2 << 1
 }
 
 [Flags]
@@ -865,7 +875,8 @@ public enum Statuses
     Haste = 2 << 15,
     Reflect = 2 << 16,
     Reflect2x = 2 << 17,
-    HighTide = 2 << 18
+    HighTide = 2 << 18,
+    Poison = 2 << 19
 }
 
 public class Equipment

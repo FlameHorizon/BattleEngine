@@ -22,7 +22,7 @@ This battle engine strives to implement all of the login which is in video game 
     - [ ] Osmose
     - [ ] Drain
     - [ ] Bio
-    - [ ] Demi
+    - [x] Demi
     - [ ] Water
     - [ ] Comet
     - [ ] Meteor
