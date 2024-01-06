@@ -358,7 +358,7 @@ public class Engine
         // If target has Reflect status then the spell will be
         // reflected back to someone from opposing team.
         if (target.Statuses.HasFlag(Statuses.Reflect)
-            || target.Statuses.HasFlag(Statuses.Reflect2x))
+            || targetHasReflect2X)
         {
             result.IsReflected = true;
             // If target reflects spell to a party/enemy group which has only
@@ -408,7 +408,6 @@ public class Engine
 
         (int bonus, bool isMiss) =
             spell.CalculateBonus(attacker, target, isMultiTarget, rnd);
-
 
         if (targetHasReflect2X)
         {

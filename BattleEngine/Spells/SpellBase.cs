@@ -6,8 +6,11 @@ public abstract class SpellBase
     public int Power { get; set; }
     public Elements ElementalAffix { get; set; }
 
-    public virtual (int bonus, bool isMiss) CalculateBonus(Unit attacker, Unit target,
-        bool isMultiTarget, int rnd)
+    public virtual (int bonus, bool isMiss) CalculateBonus(
+        Unit attacker, 
+        Unit target,
+        bool isMultiTarget, 
+        int rnd)
     {
         var bonus = (int)(attacker.Mag +
                           rnd % (Math.Floor((attacker.Lvl + attacker.Mag) /
@@ -60,19 +63,19 @@ public class Fire : SpellBase
 
 public class Demi : SpellBase
 {
-    public override (int bonus, bool isMiss) CalculateBonus(Unit attacker, Unit target,
-        bool isMultiTarget, int rnd)
+    public override (int bonus, bool isMiss) CalculateBonus(
+        Unit attacker, 
+        Unit target,
+        bool isMultiTarget, 
+        int rnd)
     {
         if (target.IsBoss)
         {
             return (0, false);
         }
 
-        if (60 > rnd % 100) // 40% chance to hit
-        {
-            return (0, true);
-        }
-
-        return ((int)Math.Floor(30.0 * target.Hp / 100.0), false);
+        return 60 > rnd % 100 // 40% chance to hit
+            ?  (0, true) 
+            : ((int)Math.Floor(30.0 * target.Hp / 100.0), false);
     }
 }
