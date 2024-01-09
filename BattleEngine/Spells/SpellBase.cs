@@ -5,6 +5,7 @@ public abstract class SpellBase
     public string Name { get; set; } = string.Empty;
     public int Power { get; set; }
     public Elements ElementalAffix { get; set; }
+    public bool IgnoresReflect { get; set; } = false;
 
     public virtual void UpdateDamageParts(ref AttackResult result,
         IRandomProvider rnd,
@@ -278,8 +279,19 @@ public class Meteor : SpellBase
     {
         int @base = Power;
         int bonus = rnd.Next(1, result.Attacker.Lvl + result.Attacker.Mag - 1);
+        if (result.Target.Statuses.HasFlag(Statuses.Shell))
+        {
+            bonus /= 2;
+        }
 
-        result.IsMiss = !(Math.Floor(result.Attacker.Lvl / 2.0) + result.Attacker.Spr >= rnd.Next() % 100);
+        if (result.Attacker.Statuses.HasFlag(Statuses.Mini))
+        {
+            bonus /= 2;
+        }
+
+        result.IsMiss =
+            !(Math.Floor(result.Attacker.Lvl / 2.0) + result.Attacker.Spr >=
+              rnd.Next() % 100);
 
         result.Base = @base;
         result.Bonus = bonus;
@@ -304,10 +316,52 @@ public class Comet : SpellBase
         int @base = Power;
         int bonus = rnd.Next(1, result.Attacker.Lvl + result.Attacker.Mag - 1);
 
+        if (result.Target.Statuses.HasFlag(Statuses.Shell))
+        {
+            bonus /= 2;
+        }
+
+        if (result.Attacker.Statuses.HasFlag(Statuses.Mini))
+        {
+            bonus /= 2;
+        }
+
         result.IsMiss = 171 > rnd.Next() % 256;
 
         result.Base = @base;
         result.Bonus = bonus;
         result.Damage = @base * bonus;
+    }
+}
+
+public class Flare : SpellBase
+{
+    public Flare()
+    {
+        Name = GetType().Name;
+        Power = 119;
+        ElementalAffix = Elements.None;
+        IgnoresReflect = true;
+    }
+}
+
+public class Doomsday : SpellBase
+{
+    public Doomsday()
+    {
+        Name = GetType().Name;
+        Power = 112;
+        ElementalAffix = Elements.Shadow;
+        IgnoresReflect = true;
+    }
+}
+
+public class Water : SpellBase
+{
+    public Water()
+    {
+        Name = GetType().Name;
+        Power = 64;
+        ElementalAffix = Elements.Water;
     }
 }

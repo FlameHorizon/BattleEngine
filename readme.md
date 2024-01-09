@@ -9,25 +9,26 @@ This battle engine strives to implement all of the login which is in video game 
 - [x] Attack Command
 - [x] Damage Alterations
 - [ ] Trance (did not implemented specific skills yet)
-- [ ] Black Magic
+- [X] Black Magic
     - [x] Fire
-    - [ ] Fira
-    - [ ] Firaga
-    - [ ] Blizzard
-    - [ ] Blizzara
-    - [ ] Blizzaga
-    - [ ] Thunder
-    - [ ] Thundara
-    - [ ] Thundaga
+    - [x] Fira
+    - [x] Firaga
+    - [x] Blizzard
+    - [x] Blizzara
+    - [x] Blizzaga
+    - [x] Thunder
+    - [x] Thundara
+    - [x] Thundaga
     - [x] Osmose
     - [x] Drain
     - [x] Bio
     - [x] Demi
     - [ ] Water
-    - [ ] Comet
-    - [ ] Meteor
-    - [ ] Flare
-    - [ ] Doomsday
+    - [x] Comet
+    - [X] Meteor
+    - [X] Flare
+    - [X] Doomsday
+    - [X] Focus
 - [ ] Status Effect (did not implemented specific skilles yet)
 - [ ] White Magic
 - [ ] Summon Magic

@@ -1,7 +1,4 @@
-﻿using System.Collections;
-using System.Diagnostics.Metrics;
-using System.Runtime.InteropServices.ComTypes;
-using System.Text;
+﻿using System.Text;
 using BattleEngine.Equipments;
 using BattleEngine.Spells;
 
@@ -360,8 +357,8 @@ public class Engine
 
         // If target has Reflect status then the spell will be
         // reflected back to someone from opposing team.
-        if (target.Statuses.HasFlag(Statuses.Reflect)
-            || targetHasReflect2X)
+        if ((target.Statuses.HasFlag(Statuses.Reflect) &&
+             spell.IgnoresReflect == false) || targetHasReflect2X)
         {
             result.IsReflected = true;
             // If target reflects spell to a party/enemy group which has only
@@ -453,13 +450,24 @@ public class Engine
         var spellNameToSpell = new Dictionary<string, SpellBase>
         {
             { "Fire", new Fire() },
+            { "Fira", new Fira() },
+            { "Firaga", new Firaga() },
+            { "Blizzard", new Blizzard() },
+            { "Blizzara", new Blizzara() },
+            { "Blizzaga", new Blizzaga() },
+            { "Thunder", new Thunder() },
+            { "Thundara", new Thundara() },
+            { "Thundaga", new Thundaga() },
             { "Demi", new Demi() },
+            { "Water", new Water() },
             { "Osmose", new Osmose() },
             { "Drain", new Drain() },
-            { "Bio", new Bio()},
-            { "Meteor", new Meteor()},
-            { "Comet", new Comet()}
-            
+            { "Bio", new Bio() },
+            { "Meteor", new Meteor() },
+            { "Comet", new Comet() },
+            { "Flare", new Flare() },
+            { "Doomsday", new Doomsday() }
+
             /*
             { "Fire", new Spell("Fire", 14, Elements.Fire) },
             { "Fira", new Spell("Fira", 29, Elements.Fire) },
@@ -567,6 +575,18 @@ public class Engine
 
         return increment;
     }
+
+    public AttackResult Focus(Unit unit)
+    {
+        var result = new AttackResult
+        {
+            Attacker = unit,
+            Target = unit,
+            FocusUsed = true,
+            MagIncrease = (int)(Math.Floor(unit.Mag * 125.0 / 100.0) - unit.Mag)
+        };
+        return result;
+    }
 }
 
 public enum BattleSpeed
@@ -622,6 +642,7 @@ public class Spell
 
 public class AttackResult
 {
+    public readonly List<(Statuses Status, Unit Unit)> InflictStatus = [];
     public bool IsCritical { get; set; }
     public bool IsMiss { get; set; }
     public bool IsEvaded { get; set; }
@@ -651,6 +672,16 @@ public class AttackResult
     public bool IsHpRestored { get; set; }
     public int HpRestored { get; set; }
 
+    /// <summary>
+    ///     Indicates if Focus skill was used or not.
+    /// </summary>
+    public bool FocusUsed { get; set; }
+
+    /// <summary>
+    ///     Increase amount of Mag stat compared to previous value.
+    /// </summary>
+    public int MagIncrease { get; set; }
+
     public override string ToString()
     {
         var sb = new StringBuilder();
@@ -665,8 +696,6 @@ public class AttackResult
 
         return sb.ToString();
     }
-
-    public readonly List<(Statuses Status, Unit Unit)> InflictStatus = [];
 }
 
 public class Unit
@@ -957,7 +986,9 @@ public enum Elements
     None = 0,
     Fire = 1,
     Ice = 2,
-    Thunder = 2 << 1
+    Thunder = 2 << 2,
+    Shadow = 2 << 2,
+    Water = 2 << 3
 }
 
 public enum WeaponType
