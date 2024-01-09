@@ -19,9 +19,9 @@ This battle engine strives to implement all of the login which is in video game 
     - [ ] Thunder
     - [ ] Thundara
     - [ ] Thundaga
-    - [ ] Osmose
-    - [ ] Drain
-    - [ ] Bio
+    - [x] Osmose
+    - [x] Drain
+    - [x] Bio
     - [x] Demi
     - [ ] Water
     - [ ] Comet

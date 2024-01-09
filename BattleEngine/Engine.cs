@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Diagnostics.Metrics;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using BattleEngine.Equipments;
@@ -405,7 +406,7 @@ public class Engine
             target = reflectTo;
         }
 
-        spell.UpdateDamageParts(ref result, rnd, isMultiTarget);
+        spell.UpdateDamageParts(ref result, _randomProvider, isMultiTarget);
         if (targetHasReflect2X)
         {
             result.Bonus *= 2;
@@ -455,7 +456,10 @@ public class Engine
             { "Demi", new Demi() },
             { "Osmose", new Osmose() },
             { "Drain", new Drain() },
-            { "Bio", new Bio()}
+            { "Bio", new Bio()},
+            { "Meteor", new Meteor()},
+            { "Comet", new Comet()}
+            
             /*
             { "Fire", new Spell("Fire", 14, Elements.Fire) },
             { "Fira", new Spell("Fira", 29, Elements.Fire) },
@@ -976,6 +980,7 @@ public enum WeaponType
 public interface IRandomProvider
 {
     int Next();
+    int Next(int minValue, int maxValue);
 }
 
 /// <summary>

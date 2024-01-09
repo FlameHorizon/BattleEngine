@@ -1070,24 +1070,24 @@ public class EngineTests
     public void Magic_Should_InflictPoison_When_BioCastedAsMultiTarget()
     {
         var rnd = new MockRandomProvider(1);
-        var p = new Party()
+        var p = new Party
         {
             Members = new[] { DefaultUnit() }
         };
 
-        var en1 = DefaultUnit();
+        Unit en1 = DefaultUnit();
         en1.Name = "B";
-        var en2 = DefaultUnit();
+        Unit en2 = DefaultUnit();
         en2.Name = "C";
-        var en = new Enemies()
+        var en = new Enemies
         {
-            Members = new[] {en1, en2}
+            Members = new[] { en1, en2 }
         };
 
         var e = new Engine(p, en, rnd);
         IEnumerable<AttackResult> attackResult = e.Magic(p.Members.First(), en.Members, "Bio");
         attackResult.Should().HaveCount(2);
-        
+
         List<(Statuses Status, Unit Unit)> inflict = attackResult.First().InflictStatus;
         inflict.First().Status.Should().Be(Statuses.Poison);
         inflict.First().Unit.Name.Should().Be(en1.Name);
@@ -1095,7 +1095,97 @@ public class EngineTests
         inflict = attackResult.ToArray()[1].InflictStatus;
         inflict.First().Status.Should().Be(Statuses.Poison);
         inflict.First().Unit.Name.Should().Be(en2.Name);
+    }
 
+    [Fact]
+    public void Magic_Should_DealRandomDamage_When_MeteorCasted()
+    {
+        // Values below 172 will miss.
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        Unit target = DefaultUnit();
+
+        var p = new Party
+        {
+            Members = new[] { attacker }
+        };
+
+        var en = new Enemies
+        {
+            Members = new[] { target, target }
+        };
+
+        var e = new Engine(p, en, rnd);
+
+        IEnumerable<AttackResult> attackResult = e.Magic(attacker, en.Members, "Meteor");
+        attackResult.First().IsMiss.Should().BeFalse();
+        attackResult.First().Damage.Should().Be(88);
+        attackResult.ToArray()[1].Damage.Should().Be(88);
+    }
+
+    [Fact]
+    public void Magic_Should_DealRandomDamage_When_CometCasted()
+    {
+        var rnd = new MockRandomProvider(172);
+        Unit attacker = DefaultUnit();
+        Unit target = DefaultUnit();
+
+        var p = new Party
+        {
+            Members = new[] { attacker }
+        };
+
+        var en = new Enemies
+        {
+            Members = new[] { target, target }
+        };
+
+        var e = new Engine(p, en, rnd);
+
+        IEnumerable<AttackResult> attackResult = e.Magic(attacker, en.Members, "Comet");
+        attackResult.First().IsMiss.Should().BeFalse();
+        attackResult.First().Damage.Should().Be(56 * 172);
+        attackResult.ToArray()[1].Damage.Should().Be(56 * 172);
+    }
+
+    [Fact]
+    public void Magic_Should_Miss_When_MeteorMisses()
+    {
+    }
+
+    [Fact]
+    public void Magic_Should_Miss_When_CometMisses()
+    {
+    }
+
+    [Fact]
+    public void Magic_Should_IgnoreMagDef_When_MeteorCasted()
+    {
+    }
+
+    [Fact]
+    public void Magic_Should_IgnoreMagDef_When_CometCasted()
+    {
+    }
+
+    [Fact]
+    public void Magic_Should_HalfDamage_When_MeteorCastedAndTargetHasShell()
+    {
+    }
+
+    [Fact]
+    public void Magic_Should_HalfDamage_When_CometCastedAndTargetHasShell()
+    {
+    }
+
+    [Fact]
+    public void Magic_Should_HalfDamage_When_MeteorCastedAndAttackerHasMini()
+    {
+    }
+
+    [Fact]
+    public void Magic_Should_HalfDamage_When_CometCastedAndAttackerHasMini()
+    {
     }
 }
 
@@ -1110,6 +1200,18 @@ public class MockRandomProvider : IRandomProvider
     }
 
     public int Next()
+    {
+        int value = _values[_index++];
+
+        if (_index >= _values.Length)
+        {
+            _index = 0;
+        }
+
+        return value;
+    }
+
+    public int Next(int minValue, int maxValue)
     {
         int value = _values[_index++];
 

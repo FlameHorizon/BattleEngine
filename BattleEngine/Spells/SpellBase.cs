@@ -6,9 +6,8 @@ public abstract class SpellBase
     public int Power { get; set; }
     public Elements ElementalAffix { get; set; }
 
-    public virtual void UpdateDamageParts(
-        ref AttackResult result,
-        int rnd,
+    public virtual void UpdateDamageParts(ref AttackResult result,
+        IRandomProvider rnd,
         bool isMultiTarget)
     {
         int @base = Power - result.Target.MagDef;
@@ -17,7 +16,7 @@ public abstract class SpellBase
 
         double floor =
             Math.Floor((result.Attacker.Lvl + result.Attacker.Mag) / 8.0);
-        var bonus = (int)(result.Attacker.Mag + rnd % (floor + 1));
+        var bonus = (int)(result.Attacker.Mag + rnd.Next() % (floor + 1));
 
         if (isMultiTarget)
         {
@@ -154,16 +153,15 @@ public class Osmose : SpellBase
         ElementalAffix = Elements.None;
     }
 
-    public override void UpdateDamageParts(
-        ref AttackResult result,
-        int rnd,
+    public override void UpdateDamageParts(ref AttackResult result,
+        IRandomProvider rnd,
         bool isMultiTarget)
     {
         Unit a = result.Attacker;
         Unit t = result.Target;
         int @base = Power - t.MagDef;
         var bonus =
-            (int)(a.Mag + rnd % (Math.Floor((a.Lvl + a.Mag) / 8.0) + 1));
+            (int)(a.Mag + rnd.Next() % (Math.Floor((a.Lvl + a.Mag) / 8.0) + 1));
 
         result.IsMpRestored = true;
         result.RestoredMp = (int)Math.Floor(@base * bonus / 4.0);
@@ -179,16 +177,15 @@ public class Drain : SpellBase
         ElementalAffix = Elements.None;
     }
 
-    public override void UpdateDamageParts(
-        ref AttackResult result,
-        int rnd,
+    public override void UpdateDamageParts(ref AttackResult result,
+        IRandomProvider rnd,
         bool isMultiTarget)
     {
         Unit a = result.Attacker;
         Unit t = result.Target;
         int @base = Power - t.MagDef;
         var bonus =
-            (int)(a.Mag + rnd % (Math.Floor((a.Lvl + a.Mag) / 8.0) + 1));
+            (int)(a.Mag + rnd.Next() % (Math.Floor((a.Lvl + a.Mag) / 8.0) + 1));
 
         if (t.Statuses.HasFlag(Statuses.Shell))
         {
@@ -209,7 +206,7 @@ public class Drain : SpellBase
 
         result.IsHpRestored = true;
         result.HpRestored = @base * bonus;
-        
+
         result.Base = @base;
         bonus = Math.Max(1, bonus);
         result.Bonus = bonus;
@@ -225,9 +222,8 @@ public class Demi : SpellBase
         ElementalAffix = Elements.None;
     }
 
-    public override void UpdateDamageParts(
-        ref AttackResult result,
-        int rnd,
+    public override void UpdateDamageParts(ref AttackResult result,
+        IRandomProvider rnd,
         bool isMultiTarget)
     {
         if (result.Target.IsBoss)
@@ -235,7 +231,7 @@ public class Demi : SpellBase
             result.IsMiss = true;
         }
 
-        if (60 > rnd % 100)
+        if (60 > rnd.Next() % 100)
         {
             result.IsMiss = true;
         }
@@ -254,16 +250,64 @@ public class Bio : SpellBase
         ElementalAffix = Elements.None;
     }
 
-    public override void UpdateDamageParts(
-        ref AttackResult result, 
-        int rnd,
+    public override void UpdateDamageParts(ref AttackResult result,
+        IRandomProvider rnd,
         bool isMultiTarget)
     {
-        bool success = 20 > rnd % 100;
+        bool success = 20 > rnd.Next() % 100;
 
         if (success)
         {
             result.InflictStatus.Add((Statuses.Poison, result.Target));
         }
+    }
+}
+
+public class Meteor : SpellBase
+{
+    public Meteor()
+    {
+        Name = GetType().Name;
+        Power = 88;
+        ElementalAffix = Elements.None;
+    }
+
+    public override void UpdateDamageParts(ref AttackResult result,
+        IRandomProvider rnd,
+        bool isMultiTarget)
+    {
+        int @base = Power;
+        int bonus = rnd.Next(1, result.Attacker.Lvl + result.Attacker.Mag - 1);
+
+        result.IsMiss = !(Math.Floor(result.Attacker.Lvl / 2.0) + result.Attacker.Spr >= rnd.Next() % 100);
+
+        result.Base = @base;
+        result.Bonus = bonus;
+        result.Damage = @base * bonus;
+    }
+}
+
+public class Comet : SpellBase
+{
+    public Comet()
+    {
+        Name = GetType().Name;
+        Power = 56;
+        ElementalAffix = Elements.None;
+    }
+
+    public override void UpdateDamageParts(
+        ref AttackResult result,
+        IRandomProvider rnd,
+        bool isMultiTarget)
+    {
+        int @base = Power;
+        int bonus = rnd.Next(1, result.Attacker.Lvl + result.Attacker.Mag - 1);
+
+        result.IsMiss = 171 > rnd.Next() % 256;
+
+        result.Base = @base;
+        result.Bonus = bonus;
+        result.Damage = @base * bonus;
     }
 }
