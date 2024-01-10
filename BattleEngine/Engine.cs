@@ -587,6 +587,124 @@ public class Engine
         };
         return result;
     }
+
+
+    /// <summary>
+    ///     Steal allows you to steal up to four items from an enemy.
+    /// </summary>
+    /// <param name="attacker">Unit which will attempt to steal.</param>
+    /// <param name="target">Unit on which steal will be executed</param>
+    /// <returns>
+    ///     <c>AttackResult</c> object which is going to store
+    ///     the result of the steal.
+    /// </returns>
+    public AttackResult Steal(Unit attacker, Unit target)
+    {
+        var result = new AttackResult
+        {
+            Attacker = attacker,
+            Target = target
+        };
+
+        // Step 1: If ATK is equal or greater than DEF, steal is a success.
+        int rnd = _randomProvider.Next();
+
+        if (attacker.Abilities.HasFlag(Sa.Bandit) == false)
+        {
+            int atk = rnd % (attacker.Lvl + attacker.Spr);
+            int def = rnd % target.Lvl;
+
+            if (atk < def)
+            {
+                result.StealSuccess = false;
+                return result;
+            }
+        }
+
+        // Step 2: Checks to see if you get an item,
+        // they're 4 possible slots to choose from.
+        int roll = rnd % 256;
+        string itemStolen;
+
+        int rareSlotChance = attacker.Abilities.HasFlag(Sa.MasterTheif)
+            ? 32
+            : 0;
+        int semiRareSlotChance = attacker.Abilities.HasFlag(Sa.MasterTheif)
+            ? 32
+            : 16;
+
+        if (attacker.Abilities.HasFlag(Sa.MasterTheif))
+        {
+            if (roll <= rareSlotChance && target.StealableItems[0] != "None")
+            {
+                itemStolen = target.StealableItems[0];
+            }
+            else if (roll <= semiRareSlotChance &&
+                     target.StealableItems[1] != "None")
+            {
+                itemStolen = target.StealableItems[1];
+            }
+            else if (roll <= 64 && target.StealableItems[2] != "None")
+            {
+                itemStolen = target.StealableItems[2];
+            }
+            else if (rnd <= 255 && target.StealableItems[3] != "None")
+            {
+                itemStolen = target.StealableItems[3];
+            }
+            else
+            {
+                itemStolen = "None";
+            }
+        }
+        else
+        {
+            if (roll <= rareSlotChance)
+            {
+                itemStolen = target.StealableItems[0];
+            }
+            else if (roll <= semiRareSlotChance)
+            {
+                itemStolen = target.StealableItems[1];
+            }
+            else if (roll <= 64)
+            {
+                itemStolen = target.StealableItems[2];
+            }
+            else if (rnd <= 255)
+            {
+                itemStolen = target.StealableItems[3];
+            }
+            else
+            {
+                itemStolen = "None";
+            }
+        }
+
+        if (itemStolen == "None")
+        {
+            result.StealSuccess = false;
+            return result;
+        }
+
+        result.StealSuccess = true;
+        result.ItemStolen = itemStolen;
+
+        // Step 3: Deals with Mug and Steal Gil.
+        if (attacker.Abilities.HasFlag(Sa.Mug))
+        {
+            result.Damage =
+                (int)(rnd % Math.Floor(attacker.Lvl * target.Lvl / 2.0));
+        }
+
+        if (attacker.Abilities.HasFlag(Sa.StealGil))
+        {
+            result.StolenGil =
+                (int)(rnd % (Math.Floor(attacker.Lvl * target.Lvl / 4.0) + 1));
+        }
+
+        return result;
+    }
 }
 
 public enum BattleSpeed
@@ -682,6 +800,22 @@ public class AttackResult
     /// </summary>
     public int MagIncrease { get; set; }
 
+    /// <summary>
+    ///     Indicates if the steal attempt was successfully or not.
+    /// </summary>
+    public bool StealSuccess { get; set; }
+
+    /// <summary>
+    ///     Name of the stolen item. If it is a <c>null</c>
+    ///     then no item was stolen last turn.
+    /// </summary>
+    public string? ItemStolen { get; set; }
+
+    /// <summary>
+    ///     Indicates the amount of Gil stolen with <c>Sa.StealGil</c>
+    /// </summary>
+    public int StolenGil { get; set; }
+
     public override string ToString()
     {
         var sb = new StringBuilder();
@@ -700,6 +834,9 @@ public class AttackResult
 
 public class Unit
 {
+    private readonly List<string> _stealableItems =
+        ["None", "None", "None", "None"];
+
     private int _atk;
 
     private int _def;
@@ -805,6 +942,11 @@ public class Unit
 
     public bool IsInTrance { get; set; }
 
+    public string[] StealableItems
+    {
+        get => _stealableItems.ToArray();
+    }
+
     public void AddStatus(Statuses status)
     {
         Statuses |= status;
@@ -873,6 +1015,11 @@ public class Unit
         }
 
         return Absorbs.HasFlag(element);
+    }
+
+    public void AddStealableItem(string itemName, int slot)
+    {
+        _stealableItems[slot] = itemName;
     }
 }
 
@@ -1023,5 +1170,9 @@ public enum Sa
     None = 0,
     ManEater = 1,
     MpAttack = 2,
-    AddStatus = 2 << 1
+    AddStatus = 2 << 1,
+    Bandit = 2 << 2,
+    MasterTheif = 2 << 3,
+    Mug = 2 << 4,
+    StealGil = 2 << 5
 }

@@ -1237,7 +1237,7 @@ public class EngineTests
         {
             attacker.AddStatus(status);
         }
-        
+
         var p = new Party
         {
             Members = new[] { attacker }
@@ -1263,13 +1263,13 @@ public class EngineTests
         var rnd = new MockRandomProvider(1);
         Unit attacker = DefaultUnit();
         attacker.Name = "A";
-        
+
         Unit target = DefaultUnit();
         target.Name = "B";
         target.AddStatus(Statuses.Reflect);
 
         var e = new Engine(rnd);
-        var attackResult = e.Magic(attacker, target, "Flare");
+        AttackResult attackResult = e.Magic(attacker, target, "Flare");
 
         attackResult.Attacker.Name.Should().Be("A");
         attackResult.Target.Name.Should().Be("B");
@@ -1277,22 +1277,21 @@ public class EngineTests
         attackResult.RefelectedTo.Should().BeNull();
         attackResult.Damage.Should().Be(1309);
     }
-    
-    
-    
+
+
     [Fact]
     public void Magic_Should_IgnoreReflect_When_DoomsdayCasted()
     {
         var rnd = new MockRandomProvider(1);
         Unit attacker = DefaultUnit();
         attacker.Name = "A";
-        
+
         Unit target = DefaultUnit();
         target.Name = "B";
         target.AddStatus(Statuses.Reflect);
 
         var e = new Engine(rnd);
-        var attackResult = e.Magic(attacker, target, "Doomsday");
+        AttackResult attackResult = e.Magic(attacker, target, "Doomsday");
 
         attackResult.Attacker.Name.Should().Be("A");
         attackResult.Target.Name.Should().Be("B");
@@ -1312,6 +1311,147 @@ public class EngineTests
 
         attackResult.FocusUsed.Should().BeTrue();
         attackResult.MagIncrease.Should().Be(2);
+    }
+
+    [Theory]
+    [InlineData("Rare", 256)]
+    [InlineData("Semi-Rare", 16)]
+    [InlineData("Uncommon", 64)]
+    [InlineData("Common", 255)]
+    public void Steal_Should_StealItemFromTarget(string itemStolen, int roll)
+    {
+        var rnd = new MockRandomProvider(roll);
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+
+        Unit target = DefaultUnit();
+        target.Name = "B";
+        target.AddStealableItem("Rare", 0);
+        target.AddStealableItem("Semi-Rare", 1);
+        target.AddStealableItem("Uncommon", 2);
+        target.AddStealableItem("Common", 3);
+
+        var e = new Engine(rnd);
+        AttackResult attackResult = e.Steal(attacker, target);
+
+        attackResult.StealSuccess.Should().BeTrue();
+        attackResult.ItemStolen.Should().Be(itemStolen);
+        attackResult.Attacker.Name.Should().Be("A");
+        attackResult.Target.Name.Should().Be("B");
+    }
+
+    [Fact]
+    public void Steal_Should_AlwaysPassFirstCheck_When_BanditEquipped()
+    {
+        // Normally, if Rnd MOD Target.Lvl
+        // is greater than Rnd Mod (Source.Lvl + Source.Spr) Source  
+        // fails to steal, but with Bandit this check always succeed.
+
+        var rnd = new MockRandomProvider(256);
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+
+        Unit target = DefaultUnit();
+        target.Name = "B";
+        target.Lvl = 30;
+        target.AddStealableItem("Rare", 0);
+
+        var e = new Engine(rnd);
+        AttackResult attackResult = e.Steal(attacker, target);
+
+        attackResult.StealSuccess.Should().BeTrue();
+        attackResult.ItemStolen.Should().Be("Rare");
+        attackResult.Attacker.Name.Should().Be("A");
+        attackResult.Target.Name.Should().Be("B");
+    }
+
+    [Fact]
+    public void Steal_Should_Fail_When_SlotIsEmpty()
+    {
+        // In this case, target does not have anything to steal.
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        Unit target = DefaultUnit();
+
+        var e = new Engine(rnd);
+        AttackResult attackResult = e.Steal(attacker, target);
+
+        attackResult.StealSuccess.Should().BeFalse();
+        attackResult.ItemStolen.Should().BeNull();
+    }
+
+    [Fact]
+    public void Steal_Should_Success_When_MasterTheifIsEquipped()
+    {
+        // Normally, RND = 1 should result in Semi-Rare but since
+        // MasterTheif will be equipped action is going to steal Rare.
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        attacker.AddAbility(Sa.MasterTheif);
+
+        Unit target = DefaultUnit();
+        target.AddStealableItem("Rare", 0);
+        target.AddStealableItem("Semi-Rare", 1);
+
+        var e = new Engine(rnd);
+        AttackResult attackResult = e.Steal(attacker, target);
+
+        attackResult.StealSuccess.Should().BeTrue();
+        attackResult.ItemStolen.Should().Be("Rare");
+    }
+
+    [Fact]
+    public void Steal_Should_OmitEmptySlots_When_MasterTheifIsEquipped()
+    {
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        attacker.AddAbility(Sa.MasterTheif);
+
+        Unit target = DefaultUnit();
+        target.AddStealableItem("Semi-Rare", 1);
+
+        var e = new Engine(rnd);
+        AttackResult attackResult = e.Steal(attacker, target);
+
+        attackResult.StealSuccess.Should().BeTrue();
+        attackResult.ItemStolen.Should().Be("Semi-Rare");
+    }
+
+    [Fact]
+    public void Steal_Should_DealDamage_When_MugIsEquipped()
+    {
+        var rnd = new MockRandomProvider(256);
+        Unit attacker = DefaultUnit();
+        attacker.AddAbility(Sa.Mug);
+
+        Unit target = DefaultUnit();
+        target.AddStealableItem("Rare", 0);
+
+        var e = new Engine(rnd);
+        AttackResult attackResult = e.Steal(attacker, target);
+
+        attackResult.StealSuccess.Should().BeTrue();
+        attackResult.ItemStolen.Should().Be("Rare");
+        attackResult.Damage.Should().Be(6);
+    }
+
+    [Fact]
+    public void Steal_Should_StealGil_When_StealGilIsEquipped()
+    {
+        var rnd = new MockRandomProvider(256);
+        Unit attacker = DefaultUnit();
+        attacker.AddAbility(Sa.StealGil);
+
+        Unit target = DefaultUnit();
+        target.AddStealableItem("Rare", 0);
+
+        var e = new Engine(rnd);
+        AttackResult attackResult = e.Steal(attacker, target);
+
+        attackResult.StealSuccess.Should().BeTrue();
+        attackResult.ItemStolen.Should().Be("Rare");
+        attackResult.Damage.Should().Be(0);
+        attackResult.StolenGil.Should().Be(22);
     }
 }
 

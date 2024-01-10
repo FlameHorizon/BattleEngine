@@ -33,7 +33,7 @@ This battle engine strives to implement all of the logic which is in video game 
 - [ ] White Magic
 - [ ] Summon Magic
 - [ ] Blue Magic
-- [ ] Steal
+- [X] Steal
 - [ ] Dragon
 - [ ] Skills
 - [ ] Flair
