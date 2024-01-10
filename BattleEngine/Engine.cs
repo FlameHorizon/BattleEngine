@@ -624,7 +624,6 @@ public class Engine
         // Step 2: Checks to see if you get an item,
         // they're 4 possible slots to choose from.
         int roll = rnd % 256;
-        string itemStolen;
 
         int rareSlotChance = attacker.Abilities.HasFlag(Sa.MasterTheif)
             ? 32
@@ -633,55 +632,34 @@ public class Engine
             ? 32
             : 16;
 
+        int slot;
         if (attacker.Abilities.HasFlag(Sa.MasterTheif))
         {
-            if (roll <= rareSlotChance && target.StealableItems[0] != "None")
+            slot = roll switch
             {
-                itemStolen = target.StealableItems[0];
-            }
-            else if (roll <= semiRareSlotChance &&
-                     target.StealableItems[1] != "None")
-            {
-                itemStolen = target.StealableItems[1];
-            }
-            else if (roll <= 64 && target.StealableItems[2] != "None")
-            {
-                itemStolen = target.StealableItems[2];
-            }
-            else if (rnd <= 255 && target.StealableItems[3] != "None")
-            {
-                itemStolen = target.StealableItems[3];
-            }
-            else
-            {
-                itemStolen = "None";
-            }
+                _ when roll <= rareSlotChance &&
+                       target.StealableItems[0] != "None" => 0,
+                _ when roll <= semiRareSlotChance &&
+                       target.StealableItems[1] != "None" => 1,
+                <= 64 when target.StealableItems[2] != "None" => 2,
+                <= 255 when target.StealableItems[3] != "None" => 3,
+                _ => -1
+            };
         }
         else
         {
-            if (roll <= rareSlotChance)
+            slot = roll switch
             {
-                itemStolen = target.StealableItems[0];
-            }
-            else if (roll <= semiRareSlotChance)
-            {
-                itemStolen = target.StealableItems[1];
-            }
-            else if (roll <= 64)
-            {
-                itemStolen = target.StealableItems[2];
-            }
-            else if (rnd <= 255)
-            {
-                itemStolen = target.StealableItems[3];
-            }
-            else
-            {
-                itemStolen = "None";
-            }
+                _ when roll <= rareSlotChance => 0,
+                _ when roll <= semiRareSlotChance => 1,
+                <= 64 => 2,
+                <= 255 => 3,
+                _ => -1
+            };
         }
 
-        if (itemStolen == "None")
+        string itemStolen = target.StealableItems[slot];
+        if (slot == -1 || itemStolen == "None")
         {
             result.StealSuccess = false;
             return result;
