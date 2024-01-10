@@ -590,7 +590,10 @@ public class Engine
 
 
     /// <summary>
-    ///     Steal allows you to steal up to four items from an enemy.
+    ///     Steal allows you to steal one of four items from an enemy if it has any.
+    ///     If Attacker has Bandit or MasterTheif supporting statuses,
+    ///     the chance of stealing will be increased. Mug and StealGil will
+    ///     also be calculated.
     /// </summary>
     /// <param name="attacker">Unit which will attempt to steal.</param>
     /// <param name="target">Unit on which steal will be executed</param>
