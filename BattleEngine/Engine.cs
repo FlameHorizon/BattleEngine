@@ -268,7 +268,7 @@ public class Engine
 
         // Since Beatrix will never be in Ipsen's Castle we don't have to
         // invert her base damage calculation which make whole process that much easier.
-        // Also Ipsen' Castle thing does not apply to AI controlled units.
+        // Also Ipsen's Castle thing does not apply to AI controlled units.
         @base = IsInIpsensCastle
             ? 60 - attacker.Atk - target.Def
             : attacker.Atk - target.Def;
