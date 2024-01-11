@@ -1665,6 +1665,95 @@ public class EngineTests
             result.InflictStatus.First().Unit.Name.Should().Be("B");
         }
     }
+
+    [Fact]
+    public void Sacrifice_Should_FullRestorePartyHpAndMp()
+    {
+        Unit a1 = DefaultUnit();
+        a1.Name = "A";
+        
+        var p = new Party
+        {
+            Members = new[] { a1, DefaultUnit() }
+        };
+
+        var en = new Enemies
+        {
+            Members = new[] { DefaultUnit() }
+        };
+
+        var e = new Engine();
+        AttackResult result = e.Sacrifice(p.Members.First());
+
+        result.Attacker.Name.Should().Be("A");
+        result.Target.Name.Should().Be("A");
+        result.Sacrificed.Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData(0, 7)]
+    [InlineData(1, 77)]
+    [InlineData(2, 777)]
+    [InlineData(3, 7777)]
+    public void LuckySeven_Should_DealDamage_When_HpEndsWithSeven(int roll, int damage)
+    {
+        var rnd = new MockRandomProvider(roll);
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+        attacker.CurrentHp = 7;
+        
+        Unit target = DefaultUnit();
+        target.Name = "B";
+
+        var e = new Engine(rnd);
+        AttackResult result = e.LuckySeven(attacker, target);
+
+        result.Attacker.Name.Should().Be("A");
+        result.Target.Name.Should().Be("B");
+        result.Damage.Should().Be(damage);
+    }
+
+    [Fact]
+    public void LuckySeven_Should_DealOneDamage_When_HpNotEndsWithSeven()
+    {
+         var rnd = new MockRandomProvider(1);
+         Unit attacker = DefaultUnit();
+         attacker.Name = "A";
+         attacker.CurrentHp = 6;
+         
+         Unit target = DefaultUnit();
+         target.Name = "B";
+ 
+         var e = new Engine(rnd);
+         AttackResult result = e.LuckySeven(attacker, target);
+ 
+         result.Attacker.Name.Should().Be("A");
+         result.Target.Name.Should().Be("B");
+         result.Damage.Should().Be(1);       
+    }
+
+    [Theory]
+    [InlineData(0, 0)]
+    [InlineData(1, 5)]
+    [InlineData(2, 10)]
+    public void Thievery_Should_DealDamage(int stealsCount, int damage)
+    {
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+        attacker.SuccessfulSteals = stealsCount;
+        
+        Unit target = DefaultUnit();
+        target.Name = "B";
+
+        var e = new Engine();
+        AttackResult result = e.Thievery(attacker, target);
+
+        result.Attacker.Name.Should().Be("A");
+        result.Target.Name.Should().Be("B");
+        result.Damage.Should().Be(damage);
+    }
+    
+    
 }
 
 public class MockRandomProvider : IRandomProvider

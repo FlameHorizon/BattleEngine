@@ -737,7 +737,7 @@ public class Engine
             Attacker = attacker,
             Target = target
         };
-        
+
         if (attacker.Equipment.Weapon.WeaponType.HasFlag(WeaponType.TheifSword))
         {
             if (target.StatusImmuneTo(attacker.Equipment.Weapon.StatusAffix))
@@ -745,7 +745,7 @@ public class Engine
                 result.StatusImmune = true;
                 return result;
             }
-            
+
             result.InflictStatus.Add((Statuses.Darkness, target));
         }
 
@@ -765,7 +765,7 @@ public class Engine
             Attacker = attacker,
             Target = target
         };
-        
+
         int roll = _randomProvider.Next() % 2;
         if (roll == 1)
         {
@@ -780,6 +780,51 @@ public class Engine
         }
 
         result.InflictStatus.Add((Statuses.Trouble, target));
+        return result;
+    }
+
+    public AttackResult Sacrifice(Unit attacker)
+    {
+        var result = new AttackResult
+        {
+            Attacker = attacker,
+            Target = attacker,
+            Sacrificed = true
+        };
+
+        return result;
+    }
+
+    public AttackResult LuckySeven(Unit attacker, Unit target)
+    {
+        var result = new AttackResult
+        {
+            Attacker = attacker,
+            Target = target
+        };
+
+        if (attacker.CurrentHp % 10 != 7)
+        {
+            result.Damage = 1;
+            return result;
+        }
+
+        int[] damage = [7, 77, 777, 7777];
+
+        int roll = _randomProvider.Next(0, 3);
+        result.Damage = damage[roll];
+        return result;
+    }
+
+    public AttackResult Thievery(Unit attacker, Unit target)
+    {
+        var result = new AttackResult
+        {
+            Attacker = attacker,
+            Target = target,
+            Damage = (int)Math.Floor(attacker.SuccessfulSteals * attacker.Spd / 2.0)
+        };
+
         return result;
     }
 }
@@ -926,6 +971,12 @@ public class AttackResult
     /// </summary>
     public bool StatusImmune { get; set; }
 
+    /// <summary>
+    ///     Indicates if the attacker sacrificed for the others.
+    ///     Other party members should have Hp and Mp fully restored.
+    /// </summary>
+    public bool Sacrificed { get; set; }
+
     public override string ToString()
     {
         var sb = new StringBuilder();
@@ -959,8 +1010,8 @@ public class Unit
     private int _magEva;
     private Elements _resistances;
     private int _spr;
-    private Elements _weaknesses;
     private Statuses _statusImmune;
+    private Elements _weaknesses;
 
     public int Atk
     {
@@ -1062,6 +1113,14 @@ public class Unit
     ///     Indicates the amount of Gil unit is storing currently.
     /// </summary>
     public int Gil { get; set; }
+
+    /// <summary>
+    ///     Count of the number of times when steal
+    ///     was successfully across entire play through.
+    ///     Steals done by Blank, Marcus, or Cinna count.
+    ///     Steals done before you get Thievery count.
+    /// </summary>
+    public int SuccessfulSteals { get; set; }
 
     public void AddStatus(Statuses status)
     {

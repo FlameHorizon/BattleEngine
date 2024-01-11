@@ -35,7 +35,7 @@ This battle engine strives to implement all of the logic which is in video game 
 - [ ] Blue Magic
 - [X] Steal
 - [ ] Dragon
-- [ ] Skills
+- [X] Skills
 - [ ] Flair
 - [ ] Sword Arts
 - [ ] Support Abilities
