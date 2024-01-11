@@ -686,6 +686,102 @@ public class Engine
 
         return result;
     }
+
+    public AttackResult Flee(Unit attacker)
+    {
+        var result = new AttackResult
+        {
+            Attacker = attacker
+        };
+
+        // Are we fighting boss right now?
+        if (Enemies.Members.Any(x => x.IsBoss))
+        {
+            result.Escaped = false;
+            return result;
+        }
+
+        result.GilLost = (int)(Enemies.TotalGoldHeld * 0.1);
+        result.Escaped = true;
+
+        return result;
+    }
+
+    public AttackResult Detect(Unit attacker, Unit target)
+    {
+        var result = new AttackResult
+        {
+            Attacker = attacker,
+            Target = target,
+            StealableItems = target.StealableItems
+        };
+        return result;
+    }
+
+    public AttackResult WhatsThat(Unit attacker, Unit target)
+    {
+        var result = new AttackResult
+        {
+            Attacker = attacker,
+            Target = target,
+            TurnsTargetAround = true
+        };
+
+        return result;
+    }
+
+    public AttackResult SoulBlade(Unit attacker, Unit target)
+    {
+        var result = new AttackResult
+        {
+            Attacker = attacker,
+            Target = target
+        };
+        
+        if (attacker.Equipment.Weapon.WeaponType.HasFlag(WeaponType.TheifSword))
+        {
+            if (target.StatusImmuneTo(attacker.Equipment.Weapon.StatusAffix))
+            {
+                result.StatusImmune = true;
+                return result;
+            }
+            
+            result.InflictStatus.Add((Statuses.Darkness, target));
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    ///     Inflicts Trouble on one enemy. 50% of missing.
+    /// </summary>
+    /// <param name="attacker">Source of the attack.</param>
+    /// <param name="target">Target of the attack</param>
+    /// <returns>Result of the attack.</returns>
+    public AttackResult Annoy(Unit attacker, Unit target)
+    {
+        var result = new AttackResult
+        {
+            Attacker = attacker,
+            Target = target
+        };
+        
+        int roll = _randomProvider.Next() % 2;
+        if (roll == 1)
+        {
+            result.IsMiss = true;
+            return result;
+        }
+
+        if (target.StatusImmuneTo(Statuses.Trouble))
+        {
+            result.StatusImmune = true;
+            return result;
+        }
+
+        result.InflictStatus.Add((Statuses.Trouble, target));
+        return result;
+    }
 }
 
 public enum BattleSpeed
@@ -707,6 +803,11 @@ public class Enemies
     public int AliveCount
     {
         get => Members.Count(u => u.IsAlive);
+    }
+
+    public int TotalGoldHeld
+    {
+        get => Members.Sum(m => m.Gil);
     }
 }
 
@@ -797,6 +898,34 @@ public class AttackResult
     /// </summary>
     public int StolenGil { get; set; }
 
+    /// <summary>
+    ///     Indicates if the party can escape from the battle.
+    /// </summary>
+    public bool Escaped { get; set; }
+
+    /// <summary>
+    ///     Indicates the amount of Gil lost during the escape.
+    /// </summary>
+    public int GilLost { get; set; }
+
+    /// <summary>
+    ///     Indicates detected stealable items from the target.
+    ///     Items are listed from Rare to Common.
+    /// </summary>
+    public string[] StealableItems { get; set; }
+
+    /// <summary>
+    ///     Indicates if the target should be turned
+    ///     around allowing for back attack.
+    /// </summary>
+    public bool TurnsTargetAround { get; set; }
+
+    /// <summary>
+    ///     Indicates that last actions would inflict a status on target
+    ///     but failed due to target's immunity.
+    /// </summary>
+    public bool StatusImmune { get; set; }
+
     public override string ToString()
     {
         var sb = new StringBuilder();
@@ -831,6 +960,7 @@ public class Unit
     private Elements _resistances;
     private int _spr;
     private Elements _weaknesses;
+    private Statuses _statusImmune;
 
     public int Atk
     {
@@ -928,6 +1058,11 @@ public class Unit
         get => _stealableItems.ToArray();
     }
 
+    /// <summary>
+    ///     Indicates the amount of Gil unit is storing currently.
+    /// </summary>
+    public int Gil { get; set; }
+
     public void AddStatus(Statuses status)
     {
         Statuses |= status;
@@ -1002,6 +1137,26 @@ public class Unit
     {
         _stealableItems[slot] = itemName;
     }
+
+    public bool StatusImmuneTo(Statuses status)
+    {
+        if (status == Statuses.None || _statusImmune == Statuses.None)
+        {
+            return false;
+        }
+
+        return _statusImmune.HasFlag(status);
+    }
+
+    /// <summary>
+    ///     Adds immunities to specified status meaning unit can't be
+    ///     inflicted by any means by this effect.
+    /// </summary>
+    /// <param name="status">Status to which unit will be resistant.</param>
+    public void AddStatusImmune(Statuses status)
+    {
+        _statusImmune |= status;
+    }
 }
 
 [Flags]
@@ -1037,7 +1192,8 @@ public enum Statuses
     Reflect = 2 << 16,
     Reflect2x = 2 << 17,
     HighTide = 2 << 18,
-    Poison = 2 << 19
+    Poison = 2 << 19,
+    Trouble = 2 << 20
 }
 
 public class Equipment

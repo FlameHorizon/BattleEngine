@@ -921,11 +921,11 @@ public class EngineTests
         Unit target = DefaultUnit();
 
         var e = new Engine(rnd);
-        AttackResult attackResult = e.Attack(attacker, target);
-        attackResult.TranceIncrease.Should().Be(1);
+        AttackResult result = e.Attack(attacker, target);
+        result.TranceIncrease.Should().Be(1);
 
-        attackResult = e.Magic(attacker, target, "Fire");
-        attackResult.TranceIncrease.Should().Be(1);
+        result = e.Magic(attacker, target, "Fire");
+        result.TranceIncrease.Should().Be(1);
     }
 
     [Fact]
@@ -938,8 +938,8 @@ public class EngineTests
         target.AddStatus(Statuses.HighTide);
 
         var e = new Engine(rnd);
-        AttackResult attackResult = e.Attack(attacker, target);
-        attackResult.TranceIncrease.Should().Be(target.Spr);
+        AttackResult result = e.Attack(attacker, target);
+        result.TranceIncrease.Should().Be(target.Spr);
     }
 
     [Fact]
@@ -951,8 +951,8 @@ public class EngineTests
         target.IsAi = true;
 
         var e = new Engine(rnd);
-        AttackResult attackResult = e.Attack(attacker, target);
-        attackResult.TranceIncrease.Should().Be(0);
+        AttackResult result = e.Attack(attacker, target);
+        result.TranceIncrease.Should().Be(0);
     }
 
     [Fact]
@@ -967,11 +967,11 @@ public class EngineTests
         target.IsAi = true;
 
         var e = new Engine(rnd);
-        AttackResult attackResult = e.Attack(attacker, target);
-        attackResult.TranceDecrease.Should().Be(34);
+        AttackResult result = e.Attack(attacker, target);
+        result.TranceDecrease.Should().Be(34);
 
-        attackResult = e.Magic(attacker, target, "Fire");
-        attackResult.TranceDecrease.Should().Be(34);
+        result = e.Magic(attacker, target, "Fire");
+        result.TranceDecrease.Should().Be(34);
     }
 
     [Fact]
@@ -993,8 +993,8 @@ public class EngineTests
         target.IsAi = true;
 
         var e = new Engine(rnd);
-        AttackResult attackResult = e.Attack(attacker, target);
-        attackResult.Damage.Should().Be(240);
+        AttackResult result = e.Attack(attacker, target);
+        result.Damage.Should().Be(240);
     }
 
     [Fact]
@@ -1005,11 +1005,11 @@ public class EngineTests
         Unit target = DefaultUnit();
 
         var e = new Engine(rnd);
-        AttackResult attackResult = e.Magic(attacker, target, "Osmose");
+        AttackResult result = e.Magic(attacker, target, "Osmose");
 
-        attackResult.Damage.Should().Be(0);
-        attackResult.IsMpRestored.Should().BeTrue();
-        attackResult.RestoredMp.Should().Be(41);
+        result.Damage.Should().Be(0);
+        result.IsMpRestored.Should().BeTrue();
+        result.RestoredMp.Should().Be(41);
     }
 
     [Fact]
@@ -1020,11 +1020,11 @@ public class EngineTests
         Unit target = DefaultUnit();
 
         var e = new Engine(rnd);
-        AttackResult attackResult = e.Magic(attacker, target, "Drain");
+        AttackResult result = e.Magic(attacker, target, "Drain");
 
-        attackResult.Damage.Should().Be(352);
-        attackResult.IsHpRestored.Should().BeTrue();
-        attackResult.HpRestored.Should().Be(352);
+        result.Damage.Should().Be(352);
+        result.IsHpRestored.Should().BeTrue();
+        result.HpRestored.Should().Be(352);
     }
 
     [Fact]
@@ -1039,15 +1039,15 @@ public class EngineTests
         target.EnemyType = EnemyType.Undead;
 
         var e = new Engine(rnd);
-        AttackResult attackResult = e.Magic(attacker, target, "Drain");
+        AttackResult result = e.Magic(attacker, target, "Drain");
 
-        attackResult.Damage.Should().Be(352);
-        attackResult.Attacker.Name.Should().Be("A");
-        attackResult.Target.Name.Should().Be("B");
-        attackResult.IsReflected.Should().BeTrue();
-        attackResult.RefelectedTo.Name.Should().Be("A");
-        attackResult.IsHpRestored.Should().BeTrue();
-        attackResult.HpRestored.Should().Be(352);
+        result.Damage.Should().Be(352);
+        result.Attacker.Name.Should().Be("A");
+        result.Target.Name.Should().Be("B");
+        result.IsReflected.Should().BeTrue();
+        result.RefelectedTo!.Name.Should().Be("A");
+        result.IsHpRestored.Should().BeTrue();
+        result.HpRestored.Should().Be(352);
     }
 
     [Fact]
@@ -1059,10 +1059,10 @@ public class EngineTests
         Unit target = DefaultUnit();
 
         var e = new Engine(rnd);
-        AttackResult attackResult = e.Magic(attacker, target, "Bio");
+        AttackResult result = e.Magic(attacker, target, "Bio");
 
-        attackResult.Damage.Should().Be(0);
-        attackResult.InflictStatus.First().Should()
+        result.Damage.Should().Be(0);
+        result.InflictStatus.First().Should()
             .Be((Statuses.Poison, target));
     }
 
@@ -1085,16 +1085,16 @@ public class EngineTests
         };
 
         var e = new Engine(p, en, rnd);
-        IEnumerable<AttackResult> attackResult =
+        IEnumerable<AttackResult> result =
             e.Magic(p.Members.First(), en.Members, "Bio");
-        attackResult.Should().HaveCount(2);
+        result.Should().HaveCount(2);
 
         List<(Statuses Status, Unit Unit)> inflict =
-            attackResult.First().InflictStatus;
+            result.First().InflictStatus;
         inflict.First().Status.Should().Be(Statuses.Poison);
         inflict.First().Unit.Name.Should().Be(en1.Name);
 
-        inflict = attackResult.ToArray()[1].InflictStatus;
+        inflict = result.ToArray()[1].InflictStatus;
         inflict.First().Status.Should().Be(Statuses.Poison);
         inflict.First().Unit.Name.Should().Be(en2.Name);
     }
@@ -1119,11 +1119,11 @@ public class EngineTests
 
         var e = new Engine(p, en, rnd);
 
-        IEnumerable<AttackResult> attackResult =
+        IEnumerable<AttackResult> result =
             e.Magic(attacker, en.Members, "Meteor");
-        attackResult.First().IsMiss.Should().BeFalse();
-        attackResult.First().Damage.Should().Be(88);
-        attackResult.ToArray()[1].Damage.Should().Be(88);
+        result.First().IsMiss.Should().BeFalse();
+        result.First().Damage.Should().Be(88);
+        result.ToArray()[1].Damage.Should().Be(88);
     }
 
     [Fact]
@@ -1145,11 +1145,11 @@ public class EngineTests
 
         var e = new Engine(p, en, rnd);
 
-        IEnumerable<AttackResult> attackResult =
+        IEnumerable<AttackResult> result =
             e.Magic(attacker, en.Members, "Comet");
-        attackResult.First().IsMiss.Should().BeFalse();
-        attackResult.First().Damage.Should().Be(56 * 172);
-        attackResult.ToArray()[1].Damage.Should().Be(56 * 172);
+        result.First().IsMiss.Should().BeFalse();
+        result.First().Damage.Should().Be(56 * 172);
+        result.ToArray()[1].Damage.Should().Be(56 * 172);
     }
 
     [Theory]
@@ -1169,10 +1169,10 @@ public class EngineTests
         };
 
         var e = new Engine(p, en, rnd);
-        IEnumerable<AttackResult> attackResult =
+        IEnumerable<AttackResult> result =
             e.Magic(p.Members.First(), en.Members, spellName);
 
-        attackResult.Should().AllSatisfy(x =>
+        result.Should().AllSatisfy(x =>
         {
             x.IsMiss = true;
             x.Damage = 0;
@@ -1211,11 +1211,11 @@ public class EngineTests
 
         var e = new Engine(p, en, rnd);
 
-        IEnumerable<AttackResult> attackResult =
+        IEnumerable<AttackResult> result =
             e.Magic(attacker, en.Members, "Meteor");
-        attackResult.First().IsMiss.Should().BeFalse();
-        attackResult.First().Damage.Should().Be(88);
-        attackResult.ToArray()[1].Damage.Should().Be(88);
+        result.First().IsMiss.Should().BeFalse();
+        result.First().Damage.Should().Be(88);
+        result.ToArray()[1].Damage.Should().Be(88);
     }
 
     [Theory]
@@ -1250,11 +1250,11 @@ public class EngineTests
 
         var e = new Engine(p, en, rnd);
 
-        IEnumerable<AttackResult> attackResult =
+        IEnumerable<AttackResult> result =
             e.Magic(attacker, en.Members, "Comet");
-        attackResult.First().IsMiss.Should().BeFalse();
-        attackResult.First().Damage.Should().Be(56 * 172 / 2);
-        attackResult.ToArray()[1].Damage.Should().Be(56 * 172 / 2);
+        result.First().IsMiss.Should().BeFalse();
+        result.First().Damage.Should().Be(56 * 172 / 2);
+        result.ToArray()[1].Damage.Should().Be(56 * 172 / 2);
     }
 
     [Fact]
@@ -1269,13 +1269,13 @@ public class EngineTests
         target.AddStatus(Statuses.Reflect);
 
         var e = new Engine(rnd);
-        AttackResult attackResult = e.Magic(attacker, target, "Flare");
+        AttackResult result = e.Magic(attacker, target, "Flare");
 
-        attackResult.Attacker.Name.Should().Be("A");
-        attackResult.Target.Name.Should().Be("B");
-        attackResult.IsReflected.Should().BeFalse();
-        attackResult.RefelectedTo.Should().BeNull();
-        attackResult.Damage.Should().Be(1309);
+        result.Attacker.Name.Should().Be("A");
+        result.Target.Name.Should().Be("B");
+        result.IsReflected.Should().BeFalse();
+        result.RefelectedTo.Should().BeNull();
+        result.Damage.Should().Be(1309);
     }
 
 
@@ -1291,13 +1291,13 @@ public class EngineTests
         target.AddStatus(Statuses.Reflect);
 
         var e = new Engine(rnd);
-        AttackResult attackResult = e.Magic(attacker, target, "Doomsday");
+        AttackResult result = e.Magic(attacker, target, "Doomsday");
 
-        attackResult.Attacker.Name.Should().Be("A");
-        attackResult.Target.Name.Should().Be("B");
-        attackResult.IsReflected.Should().BeFalse();
-        attackResult.RefelectedTo.Should().BeNull();
-        attackResult.Damage.Should().Be(112 * 11);
+        result.Attacker.Name.Should().Be("A");
+        result.Target.Name.Should().Be("B");
+        result.IsReflected.Should().BeFalse();
+        result.RefelectedTo.Should().BeNull();
+        result.Damage.Should().Be(112 * 11);
     }
 
     [Fact]
@@ -1307,10 +1307,10 @@ public class EngineTests
         Unit attacker = DefaultUnit();
 
         var e = new Engine(rnd);
-        AttackResult attackResult = e.Focus(attacker);
+        AttackResult result = e.Focus(attacker);
 
-        attackResult.FocusUsed.Should().BeTrue();
-        attackResult.MagIncrease.Should().Be(2);
+        result.FocusUsed.Should().BeTrue();
+        result.MagIncrease.Should().Be(2);
     }
 
     [Theory]
@@ -1332,12 +1332,12 @@ public class EngineTests
         target.AddStealableItem("Common", 3);
 
         var e = new Engine(rnd);
-        AttackResult attackResult = e.Steal(attacker, target);
+        AttackResult result = e.Steal(attacker, target);
 
-        attackResult.StealSuccess.Should().BeTrue();
-        attackResult.ItemStolen.Should().Be(itemStolen);
-        attackResult.Attacker.Name.Should().Be("A");
-        attackResult.Target.Name.Should().Be("B");
+        result.StealSuccess.Should().BeTrue();
+        result.ItemStolen.Should().Be(itemStolen);
+        result.Attacker.Name.Should().Be("A");
+        result.Target.Name.Should().Be("B");
     }
 
     [Fact]
@@ -1357,12 +1357,12 @@ public class EngineTests
         target.AddStealableItem("Rare", 0);
 
         var e = new Engine(rnd);
-        AttackResult attackResult = e.Steal(attacker, target);
+        AttackResult result = e.Steal(attacker, target);
 
-        attackResult.StealSuccess.Should().BeTrue();
-        attackResult.ItemStolen.Should().Be("Rare");
-        attackResult.Attacker.Name.Should().Be("A");
-        attackResult.Target.Name.Should().Be("B");
+        result.StealSuccess.Should().BeTrue();
+        result.ItemStolen.Should().Be("Rare");
+        result.Attacker.Name.Should().Be("A");
+        result.Target.Name.Should().Be("B");
     }
 
     [Fact]
@@ -1374,10 +1374,10 @@ public class EngineTests
         Unit target = DefaultUnit();
 
         var e = new Engine(rnd);
-        AttackResult attackResult = e.Steal(attacker, target);
+        AttackResult result = e.Steal(attacker, target);
 
-        attackResult.StealSuccess.Should().BeFalse();
-        attackResult.ItemStolen.Should().BeNull();
+        result.StealSuccess.Should().BeFalse();
+        result.ItemStolen.Should().BeNull();
     }
 
     [Fact]
@@ -1394,10 +1394,10 @@ public class EngineTests
         target.AddStealableItem("Semi-Rare", 1);
 
         var e = new Engine(rnd);
-        AttackResult attackResult = e.Steal(attacker, target);
+        AttackResult result = e.Steal(attacker, target);
 
-        attackResult.StealSuccess.Should().BeTrue();
-        attackResult.ItemStolen.Should().Be("Rare");
+        result.StealSuccess.Should().BeTrue();
+        result.ItemStolen.Should().Be("Rare");
     }
 
     [Fact]
@@ -1411,10 +1411,10 @@ public class EngineTests
         target.AddStealableItem("Semi-Rare", 1);
 
         var e = new Engine(rnd);
-        AttackResult attackResult = e.Steal(attacker, target);
+        AttackResult result = e.Steal(attacker, target);
 
-        attackResult.StealSuccess.Should().BeTrue();
-        attackResult.ItemStolen.Should().Be("Semi-Rare");
+        result.StealSuccess.Should().BeTrue();
+        result.ItemStolen.Should().Be("Semi-Rare");
     }
 
     [Fact]
@@ -1428,11 +1428,11 @@ public class EngineTests
         target.AddStealableItem("Rare", 0);
 
         var e = new Engine(rnd);
-        AttackResult attackResult = e.Steal(attacker, target);
+        AttackResult result = e.Steal(attacker, target);
 
-        attackResult.StealSuccess.Should().BeTrue();
-        attackResult.ItemStolen.Should().Be("Rare");
-        attackResult.Damage.Should().Be(6);
+        result.StealSuccess.Should().BeTrue();
+        result.ItemStolen.Should().Be("Rare");
+        result.Damage.Should().Be(6);
     }
 
     [Fact]
@@ -1446,12 +1446,224 @@ public class EngineTests
         target.AddStealableItem("Rare", 0);
 
         var e = new Engine(rnd);
-        AttackResult attackResult = e.Steal(attacker, target);
+        AttackResult result = e.Steal(attacker, target);
 
-        attackResult.StealSuccess.Should().BeTrue();
-        attackResult.ItemStolen.Should().Be("Rare");
-        attackResult.Damage.Should().Be(0);
-        attackResult.StolenGil.Should().Be(22);
+        result.StealSuccess.Should().BeTrue();
+        result.ItemStolen.Should().Be("Rare");
+        result.Damage.Should().Be(0);
+        result.StolenGil.Should().Be(22);
+    }
+
+    [Fact]
+    public void Flee_Should_EscapeFromBattle_When_Used()
+    {
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+        var p = new Party
+        {
+            Members = new[] { attacker }
+        };
+
+        var en = new Enemies
+        {
+            Members = new[] { DefaultUnit() }
+        };
+
+        var e = new Engine(p, en, rnd);
+        AttackResult result = e.Flee(p.Members.First());
+
+        result.Attacker.Name.Should().Be("A");
+        result.Escaped.Should().BeTrue();
+        result.GilLost.Should().Be(0);
+    }
+
+    [Fact]
+    public void Flee_Should_NotEscape_When_FightingBoss()
+    {
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+        var p = new Party
+        {
+            Members = new[] { attacker }
+        };
+
+        Unit en1 = DefaultUnit();
+        en1.IsBoss = true;
+        var en = new Enemies
+        {
+            Members = new[] { en1 }
+        };
+
+        var e = new Engine(p, en, rnd);
+        AttackResult result = e.Flee(p.Members.First());
+
+        result.Attacker.Name.Should().Be("A");
+        result.Escaped.Should().BeFalse();
+        result.GilLost.Should().Be(0);
+    }
+
+    [Fact]
+    public void Flee_Should_DeductGil_When_Escaped()
+    {
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+        var p = new Party
+        {
+            Members = new[] { attacker }
+        };
+
+        Unit en1 = DefaultUnit();
+        en1.Gil = 100;
+        var en = new Enemies
+        {
+            Members = new[] { en1 }
+        };
+
+        var e = new Engine(p, en, rnd);
+        AttackResult result = e.Flee(p.Members.First());
+
+        result.Attacker.Name.Should().Be("A");
+        result.Escaped.Should().BeTrue();
+        result.GilLost.Should().Be(10);
+    }
+
+
+    [Fact]
+    public void Detect_Should_ShowStealableItems_When_Used()
+    {
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+
+        Unit target = DefaultUnit();
+        target.Name = "B";
+        target.AddStealableItem("Rare", 0);
+        target.AddStealableItem("Semi-Rare", 1);
+        target.AddStealableItem("Uncommon", 2);
+        target.AddStealableItem("Common", 3);
+
+        var e = new Engine(rnd);
+        AttackResult result = e.Detect(attacker, target);
+
+        result.Attacker.Name.Should().Be("A");
+        result.Target.Name.Should().Be("B");
+        result.StealableItems.Should()
+            .ContainInOrder(["Rare", "Semi-Rare", "Uncommon", "Common"]);
+    }
+
+    [Fact]
+    public void WhatsThat_Should_TurnTargetAround()
+    {
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+
+        Unit target = DefaultUnit();
+        target.Name = "B";
+
+        var e = new Engine(rnd);
+        AttackResult result = e.WhatsThat(attacker, target);
+
+        result.Attacker.Name.Should().Be("A");
+        result.Target.Name.Should().Be("B");
+        result.TurnsTargetAround.Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData(WeaponType.TheifSword, 1, Statuses.Darkness)]
+    [InlineData(WeaponType.Dagger, 0, Statuses.None)]
+    public void SoulBlade_Should_AddStatus_When_TheifSwordEquipped(
+        WeaponType weaponType,
+        int inflictStatusCount,
+        Statuses status)
+    {
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+        attacker.Equipment.Weapon = new Weapon
+        {
+            WeaponType = weaponType,
+            StatusAffix = status
+        };
+
+        Unit target = DefaultUnit();
+        target.Name = "B";
+
+        var e = new Engine(rnd);
+        AttackResult result = e.SoulBlade(attacker, target);
+
+        result.Attacker.Name.Should().Be("A");
+        result.Target.Name.Should().Be("B");
+        result.InflictStatus.Should().HaveCount(inflictStatusCount);
+        if (inflictStatusCount <= 0)
+        {
+            return;
+        }
+
+        result.InflictStatus.First().Unit.Name.Should().Be("B");
+        result.InflictStatus.First().Status.Should()
+            .HaveFlag(status);
+    }
+
+    [Fact]
+    public void SoulBlade_ShouldNot_AddStatus_When_TargetIsImmune()
+    {
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+        attacker.Equipment.Weapon = new Weapon
+        {
+            WeaponType = WeaponType.TheifSword,
+            StatusAffix = Statuses.Darkness
+        };
+
+        Unit target = DefaultUnit();
+        target.Name = "B";
+        target.AddStatusImmune(Statuses.Darkness);
+
+        var e = new Engine(rnd);
+        AttackResult result = e.SoulBlade(attacker, target);
+
+        result.Attacker.Name.Should().Be("A");
+        result.Target.Name.Should().Be("B");
+        result.StatusImmune.Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Annoy_Should_AddStatusTrouble_When_NotResistant(bool isImmune)
+    {
+        var rnd = new MockRandomProvider(2);
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+
+        Unit target = DefaultUnit();
+        target.Name = "B";
+        if (isImmune)
+        {
+            target.AddStatusImmune(Statuses.Trouble);
+        }
+
+        var e = new Engine(rnd);
+        AttackResult result = e.Annoy(attacker, target);
+        result.Attacker.Name.Should().Be("A");
+        result.Target.Name.Should().Be("B");
+
+        if (isImmune)
+        {
+            result.InflictStatus.Should().HaveCount(0);
+            result.StatusImmune = true;
+        }
+        else
+        {
+            result.InflictStatus.First().Status.Should()
+                .HaveFlag(Statuses.Trouble);
+            result.InflictStatus.First().Unit.Name.Should().Be("B");
+        }
     }
 }
 
