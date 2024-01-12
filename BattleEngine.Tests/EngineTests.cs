@@ -1752,6 +1752,29 @@ public class EngineTests
         result.Target.Name.Should().Be("B");
         result.Damage.Should().Be(damage);
     }
+
+    [Fact]
+    public void SwordArts_Should_DealDamage()
+    {
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+        
+        Unit target = DefaultUnit();
+        target.Name = "B";
+
+        var e = new Engine(rnd);
+        AttackResult result = e.SwordArt(attacker, target, "Darkside");
+
+        result.Attacker.Name.Should().Be("A");
+        result.Target.Name.Should().Be("B");
+        result.IsHpDecreased.Should().BeTrue();
+        result.HpDecreased.Should().Be((int)(attacker.Hp / 8.0));
+        result.Base.Should().Be(1);
+        result.Bonus.Should().Be(11);
+        result.Damage.Should().Be(11);
+    }
+
     
     
 }

@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using BattleEngine.Equipments;
 using BattleEngine.Spells;
+using BattleEngine.SwordArts;
 
 namespace BattleEngine;
 
@@ -822,10 +823,74 @@ public class Engine
         {
             Attacker = attacker,
             Target = target,
-            Damage = (int)Math.Floor(attacker.SuccessfulSteals * attacker.Spd / 2.0)
+            Damage =
+                (int)Math.Floor(attacker.SuccessfulSteals * attacker.Spd / 2.0)
         };
 
         return result;
+    }
+
+    public AttackResult SwordArt(Unit attacker, Unit target, string name)
+    {
+        var result = new AttackResult
+        {
+            Attacker = attacker,
+            Target = target
+        };
+
+        SwordArtBase swordArt = FindSwordArt(name);
+        swordArt.UpdateDamageParts(ref result, _randomProvider, false);
+        
+        if (result.IsMiss)
+        {
+            result.IsMiss = true;
+            result.Damage = 0;
+        }
+        else if (target.IsImmuneTo(swordArt.ElementalAffix))
+        {
+            result.Damage = 0;
+        }
+        // When target absorbs elemental damage is should
+        // be healed by the amount indicated in the damage.
+        else if (target.AbsorbsElemental(swordArt.ElementalAffix))
+        {
+            result.TargetAbsorbed = true;
+            result.Damage = result.Base * result.Bonus;
+        }
+        else
+        {
+            result.Damage = result.Base * result.Bonus;
+        }
+       
+        if (attacker.Statuses.HasFlag(Statuses.Trance))
+        {
+            result.TranceDecrease =
+                (int)(Math.Floor((300.0 - attacker.Lvl) / attacker.Spr)
+                    * 10.0 % 256);
+        }
+
+        if (target.IsAi == false)
+        {
+            result.TranceIncrease = CalculateTranceIncrease(target);
+        }
+
+        return result;
+        
+    }
+
+    private SwordArtBase FindSwordArt(string swordArtName)
+    {
+        var swordArtBases = new Dictionary<string, SwordArtBase>
+        {
+            { "Darkside", new Darkside()}
+        };
+
+        if (swordArtBases.ContainsKey(swordArtName) == false)
+        {
+            throw new ArgumentException($"Sword art {swordArtName} does not exist.");
+        }
+
+        return swordArtBases[swordArtName];
     }
 }
 
@@ -977,6 +1042,18 @@ public class AttackResult
     /// </summary>
     public bool Sacrificed { get; set; }
 
+    /// <summary>
+    ///     Indicates if the attacker's Hp should be decreased
+    ///     based on the previous action. Used when using attacks like Darkside.
+    /// </summary>
+    public bool IsHpDecreased { get; set; }
+
+    /// <summary>
+    ///     Indicates the amount of Hp decreased based on the previous actions.
+    /// </summary>
+    public int HpDecreased { get; set; }
+    
+
     public override string ToString()
     {
         var sb = new StringBuilder();
@@ -1053,7 +1130,15 @@ public class Unit
     public string Name { get; set; } = string.Empty;
 
     private Elements Absorbs { get; set; }
+    
+    /// <summary>
+    ///     Maximum amount of Hp unit can have.
+    /// </summary>
     public int Hp { get; set; }
+    
+    /// <summary>
+    ///     Maximum amount of Mp unit can have.
+    /// </summary>
     public int Mp { get; set; }
 
     public int Mag
