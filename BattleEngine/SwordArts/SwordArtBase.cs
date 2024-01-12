@@ -41,6 +41,11 @@ public class Darkside : SwordArtBase
         int bonus = (int)(result.Attacker.Str + rnd.Next() %
             (Math.Floor((result.Attacker.Lvl + result.Attacker.Str) / 8.0) + 1));
 
+<<<<<<< HEAD
+=======
+        int damage = @base + bonus;
+
+>>>>>>> origin/master
         result.IsHpDecreased = true;
         result.HpDecreased = (int)(result.Attacker.Hp / 8.0);
         result.Base = @base;
