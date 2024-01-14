@@ -11,7 +11,7 @@ public abstract class SpellBase
         IRandomProvider rnd,
         bool isMultiTarget)
     {
-        int @base = Power - result.Target.MagDef;
+        int @base = Power - result.Target!.MagDef;
         @base = Math.Max(1, @base);
         result.Base = @base;
 

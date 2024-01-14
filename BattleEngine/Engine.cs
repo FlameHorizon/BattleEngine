@@ -34,6 +34,14 @@ public class Engine
 
     public AttackResult Attack(Unit attacker, Unit target)
     {
+        return AttackInternal(attacker, target);
+    }
+    
+    private AttackResult AttackInternal(
+        Unit attacker, 
+        Unit target, 
+        bool isChargeAttack = false)
+    {
         var result = new AttackResult
         {
             Attacker = attacker,
@@ -108,6 +116,13 @@ public class Engine
 
         result.Damage = @base * bonus;
 
+        // Charge! attack is a special case. Target can't counter attack
+        // and Trance is not increased nor decreased.
+        if (isChargeAttack)
+        {
+            return result;
+        }
+        
         // Calculate if the target will counter attack
         bool isCounterAttack = target.Statuses.HasFlag(Statuses.Eye4Eye)
             ? target.Spr * 2 >= rnd % 100
@@ -830,17 +845,75 @@ public class Engine
         return result;
     }
 
-    public AttackResult SwordArt(Unit attacker, Unit target, string name)
+    /// <summary>
+    ///     Allows to cast sword art on multiple targets.
+    /// </summary>
+    /// <param name="attacker">Source of the attack.</param>
+    /// <param name="targets">Targets of the attack.</param>
+    /// <param name="name">Name of the attack.</param>
+    /// <returns>Set of result for each target.</returns>
+    public IEnumerable<AttackResult> SwordArt(
+        Unit attacker, 
+        IEnumerable<Unit> targets,
+        string name)
     {
+        return targets.Select(target => SwordArt(attacker, target, name, true));
+    }
+    
+    public AttackResult SwordArt(
+        Unit attacker, 
+        Unit target, 
+        string name, 
+        bool isMultiTarget = false)
+    {
+        // In most cases, we are not going to change
+        // who is an attacker and who is a target.
+        // Only places where this can happen is here or
+        // inside of the SwordArtBase class.
         var result = new AttackResult
         {
             Attacker = attacker,
             Target = target
         };
 
+        if (name == "Charge!")
+        {
+            // Get a set of units which are in Near Death state (1/8 of max HP).
+            IEnumerable<Unit> nearDeathUnits = attacker.IsAi
+                ? Enemies.Members.Where(x => x.NearDeath)
+                : Party.Members.Where(x => x.NearDeath);
+           
+            // Get a set of units which can be attacked by Charge! skill.
+            IEnumerable<Unit> chargeTargets = attacker.IsAi
+                ? Party.Members.Where(x => x.IsAlive)
+                : Enemies.Members.Where(x => x.IsAlive);
+            
+            // For each nearDeathUnit call Attack method against random target.
+            // All of them can attack different target.
+            foreach (Unit unit in nearDeathUnits)
+            {
+                // NOTE: Based on the one video which I have watched
+                // Trance is not increased by units which are under
+                // influence of Charge! skill.
+               
+                // Select random target from the chargeTargets.
+                int index = _randomProvider.Next(0, chargeTargets.Count());
+                Unit chargeTarget = chargeTargets.ToArray()[index];
+                result.ChargeAttack.Add(Attack(unit, chargeTarget));
+            }
+            
+            // Since there is no single target we have to remove the Target value.
+            // TODO: Sometimes there is actually one target, I have to add this case as well.
+            // I think, the same target should be in ChargeAttack property
+            // as well as in Target.
+            result.Target = null;
+
+            return result;
+        }
+
         SwordArtBase swordArt = FindSwordArt(name);
         swordArt.UpdateDamageParts(ref result, _randomProvider, false);
-        
+
         if (result.IsMiss)
         {
             result.IsMiss = true;
@@ -850,6 +923,7 @@ public class Engine
         {
             result.Damage = 0;
         }
+        
         // When target absorbs elemental damage is should
         // be healed by the amount indicated in the damage.
         else if (target.AbsorbsElemental(swordArt.ElementalAffix))
@@ -861,7 +935,7 @@ public class Engine
         {
             result.Damage = result.Base * result.Bonus;
         }
-       
+
         if (attacker.Statuses.HasFlag(Statuses.Trance))
         {
             result.TranceDecrease =
@@ -875,19 +949,29 @@ public class Engine
         }
 
         return result;
-        
     }
 
     private SwordArtBase FindSwordArt(string swordArtName)
     {
         var swordArtBases = new Dictionary<string, SwordArtBase>
         {
-            { "Darkside", new Darkside()}
+            { "Darkside", new Darkside() },
+            { "Minus Strike", new MinusStrike() },
+            { "Iai Strike", new IaiStrike() },
+            { "Power Break", new PowerBreak() },
+            { "Armour Break", new ArmourBreak() },
+            { "Mental Break", new MentalBreak() },
+            { "Magic Break", new MagicBreak() },
+            { "Thunder Slash", new ThunderSlash() },
+            { "Stock Break", new StockBreak() },
+            { "Climhazzard", new Climhazzard() },
+            { "Shock", new Shock() }
         };
 
         if (swordArtBases.ContainsKey(swordArtName) == false)
         {
-            throw new ArgumentException($"Sword art {swordArtName} does not exist.");
+            throw new ArgumentException(
+                $"Sword art {swordArtName} does not exist.");
         }
 
         return swordArtBases[swordArtName];
@@ -961,7 +1045,16 @@ public class AttackResult
     public Statuses ApplicableStatuses { get; set; }
     public bool TargetAbsorbed { get; set; }
     public Unit Attacker { get; set; }
-    public Unit Target { get; set; }
+    
+    /// <summary>
+    ///     Indicates the target of the attack. Some abilities can change
+    ///     the target of the attack. For example, Reflect status. In such
+    ///     cases, this property will be set to the new target.
+    ///     If this property is set to <c>null</c> then the attack was
+    ///     multi-target and there is no single target. 
+    /// </summary>
+    public Unit? Target { get; set; }
+    
     public bool IsReflected { get; set; }
     public Unit? RefelectedTo { get; set; }
 
@@ -1052,7 +1145,59 @@ public class AttackResult
     ///     Indicates the amount of Hp decreased based on the previous actions.
     /// </summary>
     public int HpDecreased { get; set; }
-    
+
+    /// <summary>
+    ///     Indicates if the target's Str stat should be decreased.
+    /// </summary>
+    public bool IsStrReduced { get; set; }
+
+    /// <summary>
+    ///     Indicates the amount of Str stat decreased.
+    /// </summary>
+    public int StrReduced { get; set; }
+
+    /// <summary>
+    ///     Indicates if the target's Def stat should be decreased.
+    /// </summary>
+    public bool IsDefReduced { get; set; }
+
+    /// <summary>
+    ///     Indicates the amount of Def stat decreased.
+    /// </summary>
+    public int DefReduced { get; set; }
+
+    /// <summary>
+    ///     Indicates if the target's MagDef stat should be decreased.
+    /// </summary>
+    public bool IsMagDefReduced { get; set; }
+
+    /// <summary>
+    ///     Indicates the amount of MagDef stat decreased.
+    /// </summary>
+    public int MagDefReduced { get; set; }
+
+    /// <summary>
+    ///     Indicates if the target's Mag stat should be decreased.
+    /// </summary>
+    public bool IsMagReduced { get; set; }
+
+    /// <summary>
+    ///     Indicates the amount of Mag stat decreased.
+    /// </summary>
+    public int MagReduced { get; set; }
+
+    /// <summary>
+    ///     Set of attacks which will be executed after the current one
+    ///     as an effect of Charge skill.
+    /// </summary>
+    public List<AttackResult> ChargeAttack { get; set; } = new();
+
+    /// <summary>
+    ///     When Stock Break sword art is used, then this property
+    ///     will contain a list of attack results for each target.
+    /// </summary>
+    public List<AttackResult> StockBreakAttack { get; set; }
+
 
     public override string ToString()
     {
@@ -1130,12 +1275,12 @@ public class Unit
     public string Name { get; set; } = string.Empty;
 
     private Elements Absorbs { get; set; }
-    
+
     /// <summary>
     ///     Maximum amount of Hp unit can have.
     /// </summary>
     public int Hp { get; set; }
-    
+
     /// <summary>
     ///     Maximum amount of Mp unit can have.
     /// </summary>
@@ -1167,6 +1312,9 @@ public class Unit
         get => CurrentHp > 0;
     }
 
+    /// <summary>
+    ///     Current amount of Hp unit has.
+    /// </summary>
     public int CurrentHp { get; set; }
 
     public int AtbBarLength
@@ -1301,6 +1449,11 @@ public class Unit
     {
         _statusImmune |= status;
     }
+    
+    /// <summary>
+    ///     Indicates if unit is near death state.
+    /// </summary>
+    public bool NearDeath => CurrentHp <= Hp / 8.0; 
 }
 
 [Flags]
@@ -1337,7 +1490,8 @@ public enum Statuses
     Reflect2x = 2 << 17,
     HighTide = 2 << 18,
     Poison = 2 << 19,
-    Trouble = 2 << 20
+    Trouble = 2 << 20,
+    Death = 2 << 21
 }
 
 public class Equipment
@@ -1416,7 +1570,8 @@ public enum Elements
     Ice = 2,
     Thunder = 2 << 2,
     Shadow = 2 << 2,
-    Water = 2 << 3
+    Water = 2 << 3,
+    Death = 2 << 4
 }
 
 public enum WeaponType

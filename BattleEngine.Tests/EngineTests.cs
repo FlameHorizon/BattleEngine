@@ -1651,7 +1651,7 @@ public class EngineTests
         var e = new Engine(rnd);
         AttackResult result = e.Annoy(attacker, target);
         result.Attacker.Name.Should().Be("A");
-        result.Target.Name.Should().Be("B");
+        result.Target!.Name.Should().Be("B");
 
         if (isImmune)
         {
@@ -1671,7 +1671,7 @@ public class EngineTests
     {
         Unit a1 = DefaultUnit();
         a1.Name = "A";
-        
+
         var p = new Party
         {
             Members = new[] { a1, DefaultUnit() }
@@ -1695,13 +1695,14 @@ public class EngineTests
     [InlineData(1, 77)]
     [InlineData(2, 777)]
     [InlineData(3, 7777)]
-    public void LuckySeven_Should_DealDamage_When_HpEndsWithSeven(int roll, int damage)
+    public void LuckySeven_Should_DealDamage_When_HpEndsWithSeven(int roll,
+        int damage)
     {
         var rnd = new MockRandomProvider(roll);
         Unit attacker = DefaultUnit();
         attacker.Name = "A";
         attacker.CurrentHp = 7;
-        
+
         Unit target = DefaultUnit();
         target.Name = "B";
 
@@ -1716,20 +1717,20 @@ public class EngineTests
     [Fact]
     public void LuckySeven_Should_DealOneDamage_When_HpNotEndsWithSeven()
     {
-         var rnd = new MockRandomProvider(1);
-         Unit attacker = DefaultUnit();
-         attacker.Name = "A";
-         attacker.CurrentHp = 6;
-         
-         Unit target = DefaultUnit();
-         target.Name = "B";
- 
-         var e = new Engine(rnd);
-         AttackResult result = e.LuckySeven(attacker, target);
- 
-         result.Attacker.Name.Should().Be("A");
-         result.Target.Name.Should().Be("B");
-         result.Damage.Should().Be(1);       
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+        attacker.CurrentHp = 6;
+
+        Unit target = DefaultUnit();
+        target.Name = "B";
+
+        var e = new Engine(rnd);
+        AttackResult result = e.LuckySeven(attacker, target);
+
+        result.Attacker.Name.Should().Be("A");
+        result.Target.Name.Should().Be("B");
+        result.Damage.Should().Be(1);
     }
 
     [Theory]
@@ -1741,7 +1742,7 @@ public class EngineTests
         Unit attacker = DefaultUnit();
         attacker.Name = "A";
         attacker.SuccessfulSteals = stealsCount;
-        
+
         Unit target = DefaultUnit();
         target.Name = "B";
 
@@ -1754,12 +1755,12 @@ public class EngineTests
     }
 
     [Fact]
-    public void SwordArts_Should_DealDamage()
+    public void SwordArts_Should_DealDamage_When_DarksideUsed()
     {
         var rnd = new MockRandomProvider(1);
         Unit attacker = DefaultUnit();
         attacker.Name = "A";
-        
+
         Unit target = DefaultUnit();
         target.Name = "B";
 
@@ -1767,7 +1768,7 @@ public class EngineTests
         AttackResult result = e.SwordArt(attacker, target, "Darkside");
 
         result.Attacker.Name.Should().Be("A");
-        result.Target.Name.Should().Be("B");
+        result.Target!.Name.Should().Be("B");
         result.IsHpDecreased.Should().BeTrue();
         result.HpDecreased.Should().Be((int)(attacker.Hp / 8.0));
         result.Base.Should().Be(1);
@@ -1775,6 +1776,413 @@ public class EngineTests
         result.Damage.Should().Be(11);
     }
 
+    [Fact]
+    public void SwordArts_Should_DealDamage_When_MinusStrikeUsed()
+    {
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+
+        Unit target = DefaultUnit();
+        target.Name = "B";
+
+        var e = new Engine(rnd);
+        AttackResult result = e.SwordArt(attacker, target, "Minus Strike");
+
+        result.Attacker.Name.Should().Be("A");
+        result.Target.Name.Should().Be("B");
+        result.Base.Should().Be(target.Hp - target.CurrentHp);
+        result.Bonus.Should().Be(1);
+        result.Damage.Should().Be(target.Hp - target.CurrentHp);
+    }
+
+
+    [Theory]
+    [InlineData(1, true)]
+    [InlineData(3, true)]
+    [InlineData(5, false)]
+    public void SwordArts_Should_DealDamage_When_IaiStrikeUsedAndHits(int roll,
+        bool isHit)
+    {
+        var rnd = new MockRandomProvider(roll);
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+
+        Unit target = DefaultUnit();
+        target.Name = "B";
+
+        var e = new Engine(rnd);
+        AttackResult result = e.SwordArt(attacker, target, "Iai Strike");
+
+        result.Attacker.Name.Should().Be("A");
+        result.Target.Name.Should().Be("B");
+        result.Damage.Should().Be(0);
+
+        if (!isHit)
+        {
+            return;
+        }
+
+        result.InflictStatus.First().Status.Should().HaveFlag(Statuses.Death);
+        result.InflictStatus.First().Unit.Name.Should().Be("B");
+    }
+
+    [Theory]
+    [InlineData(1, true)]
+    [InlineData(2, false)]
+    public void SwordArts_Should_DealDamage_When_PowerBreakUsedAndHits(int roll,
+        bool isHit)
+    {
+        var rnd = new MockRandomProvider(roll);
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+
+        Unit target = DefaultUnit();
+        target.Name = "B";
+
+        var e = new Engine(rnd);
+        AttackResult result = e.SwordArt(attacker, target, "Power Break");
+
+        result.Attacker.Name.Should().Be("A");
+        result.Target.Name.Should().Be("B");
+        result.Damage.Should().Be(0);
+
+        if (!isHit)
+        {
+            return;
+        }
+
+        result.IsStrReduced.Should().BeTrue();
+        result.StrReduced.Should().Be(7);
+    }
+
+    [Theory]
+    [InlineData(1, true)]
+    [InlineData(2, false)]
+    public void SwordArts_Should_DealDamage_When_ArmourBreakUsedAndHits(
+        int roll,
+        bool isHit)
+    {
+        var rnd = new MockRandomProvider(roll);
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+
+        Unit target = DefaultUnit();
+        target.Name = "B";
+
+        var e = new Engine(rnd);
+        AttackResult result = e.SwordArt(attacker, target, "Armour Break");
+
+        result.Attacker.Name.Should().Be("A");
+        result.Target.Name.Should().Be("B");
+        result.Damage.Should().Be(0);
+
+        if (!isHit)
+        {
+            return;
+        }
+
+        result.IsDefReduced.Should().BeTrue();
+        result.DefReduced.Should().Be(4);
+    }
+
+    [Theory]
+    [InlineData(1, true)]
+    [InlineData(2, false)]
+    public void SwordArts_Should_DealDamage_When_MentalBreakUsedAndHits(
+        int roll,
+        bool isHit)
+    {
+        var rnd = new MockRandomProvider(roll);
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+
+        Unit target = DefaultUnit();
+        target.Name = "B";
+        target.MagDef = 9;
+
+        var e = new Engine(rnd);
+        AttackResult result = e.SwordArt(attacker, target, "Mental Break");
+
+        result.Attacker.Name.Should().Be("A");
+        result.Target.Name.Should().Be("B");
+        result.Damage.Should().Be(0);
+
+        if (!isHit)
+        {
+            return;
+        }
+
+        result.IsMagDefReduced.Should().BeTrue();
+        result.MagDefReduced.Should().Be(4);
+    }
+
+    [Theory]
+    [InlineData(1, true)]
+    [InlineData(2, false)]
+    public void SwordArts_Should_DealDamage_When_MagicBreakUsedAndHits(
+        int roll,
+        bool isHit)
+    {
+        var rnd = new MockRandomProvider(roll);
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+
+        Unit target = DefaultUnit();
+        target.Name = "B";
+
+        var e = new Engine(rnd);
+        AttackResult result = e.SwordArt(attacker, target, "Magic Break");
+
+        result.Attacker.Name.Should().Be("A");
+        result.Target!.Name.Should().Be("B");
+        result.Damage.Should().Be(0);
+
+        if (!isHit)
+        {
+            return;
+        }
+
+        result.IsMagReduced.Should().BeTrue();
+        result.MagReduced.Should().Be(5);
+    }
+
+    [Fact]
+    public void SwordArts_Should_MakeNearDeathUnitsAttack_When_ChargeUsed()
+    {
+        // All party members which are in critical state will attack
+        // expect the one who used Charge.
+
+        var rnd = new MockRandomProvider(0);
+
+        Unit a1 = DefaultUnit();
+        a1.Name = "A";
+        Unit a2 = DefaultUnit();
+        a2.Name = "B";
+        a2.CurrentHp = 1;
+        Unit a3 = DefaultUnit();
+        a3.CurrentHp = 1;
+        a3.Name = "C";
+
+        var p = new Party
+        {
+            Members = new[] { a1, a2, a3 }
+        };
+
+        Unit target = DefaultUnit();
+        target.Name = "D";
+
+        var en = new Enemies
+        {
+            Members = new[] { target }
+        };
+
+        var e = new Engine(p, en, rnd);
+        AttackResult result = e.SwordArt(a1, target, "Charge!");
+
+        result.Attacker.Name.Should().Be("A");
+        result.Target.Should().BeNull();
+        result.Damage.Should().Be(0);
+
+        result.ChargeAttack.Should().HaveCount(2);
+        result.ChargeAttack.First().Attacker.Name.Should().Be("B");
+        result.ChargeAttack.First().Target!.Name.Should().Be("D");
+        result.ChargeAttack.ToArray()[1].Attacker.Name.Should().Be("C");
+        result.ChargeAttack.ToArray()[1].Target!.Name.Should().Be("D");
+    }
+
+    [Fact]
+    public void SwordArts_Should_DealDamage_When_ThunderSlashUsed()
+    {
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+
+        Unit target = DefaultUnit();
+        target.Name = "B";
+
+        var e = new Engine();
+        AttackResult result = e.SwordArt(attacker, target, "Thunder Slash");
+
+        result.Attacker.Name.Should().Be("A");
+        result.Target!.Name.Should().Be("B");
+        result.Damage.Should().Be(19);
+    }
+
+    [Fact]
+    public void SwordArts_Should_DealDamage_When_StockBreakUsed()
+    {
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+
+        Unit target = DefaultUnit();
+        target.Name = "B";
+
+        var e = new Engine(rnd);
+        AttackResult result = e.SwordArt(attacker, target, "Stock Break");
+        result.Base.Should().Be(6);
+        result.Bonus.Should().Be(11);
+        result.Damage.Should().Be(66);
+        result.Attacker.Name.Should().Be("A");
+        result.Target!.Name.Should().Be("B");
+    }
+
+    [Fact]
+    public void
+        SwordArts_Should_DealDamage_WhenStockBreakUsedAndTargetIsWeakToElement()
+    {
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        attacker.Equipment.Weapon = new Weapon
+        {
+            Atk = 10,
+            ElementalAffix = Elements.Ice,
+            Name = "Ice Brand"
+        };
+
+        Unit target = DefaultUnit();
+        target.AddWeakness(Elements.Ice);
+        target.Name = "B";
+
+        var e = new Engine(rnd);
+        AttackResult result = e.SwordArt(attacker, target, "Stock Break");
+        result.Base.Should().Be(6);
+        result.Bonus.Should().Be(16);
+        result.Damage.Should().Be(96);
+    }
+
+    [Fact]
+    public void
+        SwordArts_Should_DealDamage_WhenStockBreakUsedAndMultipleTargets()
+    {
+        var rnd = new MockRandomProvider(1);
+
+        Unit a1 = DefaultUnit();
+        a1.Name = "A";
+
+        var p = new Party
+        {
+            Members = new[] { a1 }
+        };
+
+        Unit t1 = DefaultUnit();
+        t1.Name = "B";
+        Unit t2 = DefaultUnit();
+        t2.Name = "C";
+
+        var en = new Enemies
+        {
+            Members = new[] { t1, t2 }
+        };
+
+        var e = new Engine(p, en, rnd);
+        IEnumerable<AttackResult> result =
+            e.SwordArt(a1, en.Members, "Stock Break");
+        result.Should().HaveCount(2);
+        AttackResult first = result.First();
+        first.Attacker.Name.Should().Be("A");
+        first.Target!.Name.Should().Be("B");
+        first.Base.Should().Be(6);
+        first.Bonus.Should().Be(11);
+        first.Damage.Should().Be(66);
+
+        AttackResult second = result.ToArray()[1];
+        second.Attacker.Name.Should().Be("A");
+        second.Target!.Name.Should().Be("C");
+        second.Base.Should().Be(6);
+        second.Bonus.Should().Be(11);
+        second.Damage.Should().Be(66);
+    }
+
+    [Fact]
+    public void
+        SwordArts_Should_DealDamage_WhenClimhazzardUsedAndMultipleTargets()
+    {
+        var rnd = new MockRandomProvider(1);
+
+        Unit a1 = DefaultUnit();
+        a1.Name = "A";
+
+        var p = new Party
+        {
+            Members = new[] { a1 }
+        };
+
+        Unit t1 = DefaultUnit();
+        t1.Name = "B";
+        Unit t2 = DefaultUnit();
+        t2.Name = "C";
+
+        var en = new Enemies
+        {
+            Members = new[] { t1, t2 }
+        };
+
+        var e = new Engine(p, en, rnd);
+        IEnumerable<AttackResult> result =
+            e.SwordArt(a1, en.Members, "Climhazzard");
+        result.Should().HaveCount(2);
+        AttackResult first = result.First();
+        first.Attacker.Name.Should().Be("A");
+        first.Target!.Name.Should().Be("B");
+        first.Base.Should().Be(20);
+        first.Bonus.Should().Be(11);
+        first.Damage.Should().Be(220);
+
+        AttackResult second = result.ToArray()[1];
+        second.Attacker.Name.Should().Be("A");
+        second.Target!.Name.Should().Be("C");
+        second.Base.Should().Be(20);
+        second.Bonus.Should().Be(11);
+        second.Damage.Should().Be(220);
+    }
+
+    [Fact]
+    public void SwordArt_Should_DealDamage_When_ShockUsed()
+    {
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+
+        Unit target = DefaultUnit();
+        target.Name = "B";
+
+        var e = new Engine(rnd);
+        AttackResult result = e.SwordArt(attacker, target, "Shock");
+
+        result.Attacker.Name.Should().Be("A");
+        result.Target!.Name.Should().Be("B");
+        result.Base.Should().Be(21);
+        result.Bonus.Should().Be(11);
+        result.Damage.Should().Be(231);
+    }
+
+    [Fact]
+    public void SwordArt_Should_DealDamage_When_ShockUsedWithIce()
+    {
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+        attacker.Equipment.Weapon = new Weapon
+        {
+            Atk = 10,
+            ElementalAffix = Elements.Ice,
+            Name = "Ice Brand"
+        };
+
+        Unit target = DefaultUnit();
+        target.Name = "B";
+        target.AddWeakness(Elements.Ice);
+
+        var e = new Engine(rnd);
+        AttackResult result = e.SwordArt(attacker, target, "Shock");
+
+        result.Attacker.Name.Should().Be("A");
+        result.Target!.Name.Should().Be("B");
+        result.Base.Should().Be(21);
+        result.Bonus.Should().Be(16);
+        result.Damage.Should().Be(21 * 16);
+    }
     
     
 }
