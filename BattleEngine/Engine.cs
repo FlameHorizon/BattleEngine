@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System.Dynamic;
+using System.Reflection.Metadata;
+using System.Text;
 using BattleEngine.Equipments;
 using BattleEngine.Spells;
 using BattleEngine.SwordArts;
@@ -443,7 +445,14 @@ public class Engine
         }
         else
         {
-            result.Damage = result.Base * result.Bonus;
+            if (spell.IsHealing)
+            {
+                result.HpRestored = result.Base * result.Bonus;
+            }
+            else
+            {
+                result.Damage = result.Base * result.Bonus;
+            }
         }
 
         if (attacker.Statuses.HasFlag(Statuses.Trance))
@@ -482,7 +491,17 @@ public class Engine
             { "Meteor", new Meteor() },
             { "Comet", new Comet() },
             { "Flare", new Flare() },
-            { "Doomsday", new Doomsday() }
+            { "Doomsday", new Doomsday() },
+            { "Holy", new Holy() },
+            { "Cure", new Cure() },
+            { "Cura", new Cura() },
+            { "Curaga", new Curaga() },
+            { "Life", new Life()},
+            { "Full-Life", new FullLife()},
+            { "Might", new Might()},
+            { "Jewel", new Jewel()}
+            
+
 
             /*
             { "Fire", new Spell("Fire", 14, Elements.Fire) },
@@ -1002,7 +1021,7 @@ public class Engine
         {
             bonus += (int)(bonus * 0.5);
         }
-        
+
         result.Base = @base;
         result.Bonus = bonus;
         result.Damage = @base * bonus;
@@ -1230,6 +1249,21 @@ public class AttackResult
     ///     will contain a list of attack results for each target.
     /// </summary>
     public List<AttackResult> StockBreakAttack { get; set; }
+    
+    /// <summary>
+    ///     Indicates if the target should be revived.
+    /// </summary>
+    public bool IsRevived { get; set; }
+
+    /// <summary>
+    ///     Indicates if the target should have Str stat increased.
+    /// </summary>
+    public bool IsStrIncreased { get; set; }
+
+    /// <summary>
+    ///     Indicates the amount of Str stat increased.
+    /// </summary>
+    public int StrIncreased { get; set; }
 
 
     public override string ToString()
@@ -1604,7 +1638,8 @@ public enum Elements
     Thunder = 2 << 2,
     Shadow = 2 << 2,
     Water = 2 << 3,
-    Death = 2 << 4
+    Death = 2 << 4,
+    Holy = 2 << 5
 }
 
 public enum WeaponType

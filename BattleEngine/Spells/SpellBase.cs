@@ -7,6 +7,11 @@ public abstract class SpellBase
     public Elements ElementalAffix { get; set; }
     public bool IgnoresReflect { get; set; } = false;
     public int SwordMagicPower { get; set; } = 0;
+    
+    /// <summary>
+    ///     Indicates if the spell is healing.
+    /// </summary>
+    public bool IsHealing { get; set; }
 
     public virtual void UpdateDamageParts(ref AttackResult result,
         IRandomProvider rnd,
@@ -377,5 +382,166 @@ public class Water : SpellBase
         Power = 64;
         ElementalAffix = Elements.Water;
         SwordMagicPower = 25;
+    }
+}
+
+public class Holy : SpellBase
+{
+    public Holy()
+    {
+        Name = GetType().Name;
+        Power = 113;
+        ElementalAffix = Elements.Holy;
+    }
+}
+
+public class Cure : SpellBase
+{
+    public Cure()
+    {
+        Name = GetType().Name;
+        Power = 16;
+        ElementalAffix = Elements.None;
+        IsHealing = true;
+    }
+
+    public override void UpdateDamageParts(
+        ref AttackResult result,
+        IRandomProvider rnd,
+        bool isMultiTarget)
+    {
+        // By calling this here we will get right value for bonus.
+        // We will need to recalculate base value.
+        base.UpdateDamageParts(ref result, rnd, isMultiTarget);
+        result.Base = Power;
+        result.IsHpRestored = true;
+    }
+}
+
+public class Cura : SpellBase
+{
+    public Cura()
+    {
+        Name = GetType().Name;
+        Power = 38;
+        ElementalAffix = Elements.None;
+        IsHealing = true;
+    }
+
+    public override void UpdateDamageParts(
+        ref AttackResult result,
+        IRandomProvider rnd,
+        bool isMultiTarget)
+    {
+       base.UpdateDamageParts(ref result, rnd, isMultiTarget);
+        result.Base = Power;
+        result.IsHpRestored = true;
+    }
+}
+
+public class Curaga : SpellBase
+{
+    public Curaga()
+    {
+        Name = GetType().Name;
+        Power = 107;
+        ElementalAffix = Elements.None;
+        IsHealing = true;
+    }
+
+    public override void UpdateDamageParts(
+        ref AttackResult result,
+        IRandomProvider rnd,
+        bool isMultiTarget)
+    {
+       base.UpdateDamageParts(ref result, rnd, isMultiTarget);
+        result.Base = Power;
+        result.IsHpRestored = true;
+    }
+}
+
+public class Life : SpellBase
+{
+    public Life()
+    {
+        Name = GetType().Name;
+        Power = 0;
+        ElementalAffix = Elements.None;
+        IsHealing = true;
+    }
+    
+    public override void UpdateDamageParts(
+        ref AttackResult result,
+        IRandomProvider rnd,
+        bool isMultiTarget)
+    {
+        result.Base =(int)Math.Floor(((result.Target.Spr + 5) * result.Target.Hp) / 100.0);
+        result.Bonus = 1;
+        result.IsHpRestored = true;
+        result.IsRevived = true;
+    }
+}
+
+public class FullLife: SpellBase
+{
+    public FullLife()
+    {
+        Name = GetType().Name;
+        Power = 0;
+        ElementalAffix = Elements.None;
+        IsHealing = true;
+    }
+    
+    public override void UpdateDamageParts(
+        ref AttackResult result,
+        IRandomProvider rnd,
+        bool isMultiTarget)
+    {
+        result.Base =(int)Math.Floor(((result.Target.Spr + 100) * result.Target.Hp) / 100.0);
+        result.Bonus = 1;
+        result.IsHpRestored = true;
+        result.IsRevived = true;
+    }
+}
+
+
+public class Might : SpellBase
+{
+    public Might()
+    {
+        Name = GetType().Name;
+    }
+    
+    public override void UpdateDamageParts(
+        ref AttackResult result,
+        IRandomProvider rnd,
+        bool isMultiTarget)
+    {
+        result.IsStrIncreased= true;
+        result.StrIncreased = (int)Math.Floor((result.Target.Str * 125) / 100.0);
+    }
+}
+
+public class Jewel : SpellBase
+{
+    public Jewel()
+    {
+        Name = GetType().Name;
+    }
+    
+    public override void UpdateDamageParts(
+        ref AttackResult result,
+        IRandomProvider rnd,
+        bool isMultiTarget)
+    {
+        int roll = rnd.Next(1, 3);
+        if (roll == 1)
+        {
+            result.StealSuccess= true;
+            result.ItemStolen = "Ore";
+            return;
+        }
+        
+        result.StealSuccess = false;
     }
 }

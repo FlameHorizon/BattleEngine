@@ -2280,16 +2280,137 @@ public class EngineTests
         Unit attacker = DefaultUnit();
         Unit target = DefaultUnit();
         target.AddWeakness(Elements.Fire);
-        
+
         var rnd = new MockRandomProvider(1);
         var e = new Engine(rnd);
-        
+
         AttackResult result = e.SwordMagic(attacker, target, "Fire");
         result.Base.Should().Be(6);
         result.Bonus.Should().Be(16);
         result.Damage.Should().Be(96);
     }
-    
+
+    [Fact]
+    public void Magic_Should_DealDamage_When_HolyCasted()
+    {
+        Unit attacker = DefaultUnit();
+        Unit target = DefaultUnit();
+
+        var rnd = new MockRandomProvider(1);
+        var e = new Engine(rnd);
+
+        AttackResult result = e.Magic(attacker, target, "Holy");
+        result.Base.Should().Be(113);
+        result.Bonus.Should().Be(11);
+        result.Damage.Should().Be(1243);
+    }
+
+    [Theory]
+    [InlineData("Cure", 16, 176, false, 11)]
+    [InlineData("Cura", 38, 418, false, 11)]
+    [InlineData("Curaga", 107, 1177, false, 11)]
+    [InlineData("Cure", 16, 5 * 16, true, 5)]
+    [InlineData("Cura", 38, 5 * 38, true, 5)]
+    [InlineData("Curaga", 107, 5 * 107, true, 5)]
+    public void Magic_Should_Heal_When_CureCasted(string name,
+        int @base,
+        int hpRestored,
+        bool isMultiTarget,
+        int bonus)
+    {
+        Unit caster = DefaultUnit();
+        Unit target = DefaultUnit();
+        var targets = new List<Unit> { target, target };
+
+        var rnd = new MockRandomProvider(1);
+        var e = new Engine(rnd);
+
+        if (isMultiTarget)
+        {
+            IEnumerable<AttackResult> result =
+                e.Magic(caster, targets, name);
+            result.Should().HaveCount(2);
+            result.First().Base.Should().Be(@base);
+            result.First().Bonus.Should().Be(bonus);
+            result.First().HpRestored.Should().Be(hpRestored);
+            result.First().IsHpRestored.Should().BeTrue();
+
+            result.ToArray()[1].Base.Should().Be(@base);
+            result.ToArray()[1].Bonus.Should().Be(bonus);
+            result.ToArray()[1].HpRestored.Should().Be(hpRestored);
+            result.ToArray()[1].IsHpRestored.Should().BeTrue();
+        }
+        else
+        {
+            AttackResult result = e.Magic(caster, target, name);
+            result.Base.Should().Be(@base);
+            result.Bonus.Should().Be(11);
+            result.HpRestored.Should().Be(hpRestored);
+            result.IsHpRestored.Should().BeTrue();
+        }
+    }
+
+    [Fact]
+    public void Magic_Should_Revive_When_LifeCasted()
+    {
+        Unit caster = DefaultUnit();
+        Unit target = DefaultUnit();
+
+        var rnd = new MockRandomProvider(1);
+        var e = new Engine(rnd);
+
+        AttackResult result = e.Magic(caster, target, "Life");
+        result.Base.Should().Be(15);
+        result.Bonus.Should().Be(1);
+        result.HpRestored.Should().Be(15);
+        result.IsHpRestored.Should().BeTrue();
+        result.IsRevived.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Magic_Should_Revive_When_FullLifeCasted()
+    {
+        Unit caster = DefaultUnit();
+        Unit target = DefaultUnit();
+
+        var rnd = new MockRandomProvider(1);
+        var e = new Engine(rnd);
+
+        AttackResult result = e.Magic(caster, target, "Full-Life");
+        result.Base.Should().Be(110);
+        result.Bonus.Should().Be(1);
+        result.HpRestored.Should().Be(110);
+        result.IsHpRestored.Should().BeTrue();
+        result.IsRevived.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Magic_Should_IncreaseStr_When_MightCasted()
+    {
+        Unit caster = DefaultUnit();
+        Unit target = DefaultUnit();
+
+        var rnd = new MockRandomProvider(1);
+        var e = new Engine(rnd);
+
+        AttackResult result = e.Magic(caster, target, "Might");
+        result.IsStrIncreased.Should().BeTrue();
+        result.StrIncreased.Should().Be(12);
+    }
+
+    [Fact]
+    public void Magic_Should_ExtractOre_When_JewelCasted()
+    {
+         Unit caster = DefaultUnit();
+         Unit target = DefaultUnit();
+ 
+         var rnd = new MockRandomProvider(1);
+         var e = new Engine(rnd);
+ 
+         AttackResult result = e.Magic(caster, target, "Jewel");
+         result.StealSuccess.Should().BeTrue();
+         result.ItemStolen.Should().Be("Ore");
+    }
 }
 
 public class MockRandomProvider : IRandomProvider
