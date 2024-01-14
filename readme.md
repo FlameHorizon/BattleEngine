@@ -30,7 +30,7 @@ This battle engine strives to implement all of the logic which is in video game 
     - [X] Doomsday
     - [X] Focus
 - [ ] Status Effect (did not implemented specific skilles yet)
-- [ ] White Magic
+- [X] White Magic
 - [ ] Summon Magic
 - [ ] Blue Magic
 - [X] Steal
