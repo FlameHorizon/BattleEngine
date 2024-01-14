@@ -976,6 +976,33 @@ public class Engine
 
         return swordArtBases[swordArtName];
     }
+
+    public IEnumerable<AttackResult> SwordMagic(Unit attacker,
+        IEnumerable<Unit> targets, string spellName)
+    {
+        return targets.Select(target => SwordMagic(attacker, target, spellName));
+    }
+    
+    public AttackResult SwordMagic(Unit attacker, Unit target, string spellName)
+    {
+        var result = new AttackResult
+        {
+            Attacker = attacker,
+            Target = target
+        };
+
+        SpellBase spell = FindSpell(spellName);
+
+        int @base = attacker.Atk + spell.SwordMagicPower - target.Def;
+        int bonus = (int)(attacker.Str + _randomProvider.Next() %
+            (Math.Floor((attacker.Lvl + attacker.Str) / 8.0) + 1));
+        
+        result.Base = @base;
+        result.Bonus = bonus;
+        result.Damage = @base * bonus;
+
+        return result;
+    }
 }
 
 public enum BattleSpeed

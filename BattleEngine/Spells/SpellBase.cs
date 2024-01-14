@@ -6,6 +6,7 @@ public abstract class SpellBase
     public int Power { get; set; }
     public Elements ElementalAffix { get; set; }
     public bool IgnoresReflect { get; set; } = false;
+    public int SwordMagicPower { get; set; } = 0;
 
     public virtual void UpdateDamageParts(ref AttackResult result,
         IRandomProvider rnd,
@@ -62,6 +63,7 @@ public class Fire : SpellBase
         Name = GetType().Name;
         Power = 14;
         ElementalAffix = Elements.Fire;
+        SwordMagicPower = 5;
     }
 }
 
@@ -72,6 +74,7 @@ public class Fira : SpellBase
         Name = GetType().Name;
         Power = 29;
         ElementalAffix = Elements.Fire;
+        SwordMagicPower = 10;
     }
 }
 
@@ -82,6 +85,7 @@ public class Firaga : SpellBase
         Name = GetType().Name;
         Power = 72;
         ElementalAffix = Elements.Fire;
+        SwordMagicPower = 30;
     }
 }
 
@@ -92,6 +96,7 @@ public class Blizzard : SpellBase
         Name = GetType().Name;
         Power = 14;
         ElementalAffix = Elements.Ice;
+        SwordMagicPower = 5;
     }
 }
 
@@ -102,6 +107,7 @@ public class Blizzara : SpellBase
         Name = GetType().Name;
         Power = 29;
         ElementalAffix = Elements.Ice;
+        SwordMagicPower = 10;
     }
 }
 
@@ -112,6 +118,7 @@ public class Blizzaga : SpellBase
         Name = GetType().Name;
         Power = 72;
         ElementalAffix = Elements.Fire;
+        SwordMagicPower = 30;
     }
 }
 
@@ -122,6 +129,7 @@ public class Thunder : SpellBase
         Name = GetType().Name;
         Power = 14;
         ElementalAffix = Elements.Thunder;
+        SwordMagicPower = 5;
     }
 }
 
@@ -132,6 +140,7 @@ public class Thundara : SpellBase
         Name = GetType().Name;
         Power = 29;
         ElementalAffix = Elements.Thunder;
+        SwordMagicPower = 10;
     }
 }
 
@@ -142,6 +151,7 @@ public class Thundaga : SpellBase
         Name = GetType().Name;
         Power = 72;
         ElementalAffix = Elements.Thunder;
+        SwordMagicPower = 30;
     }
 }
 
@@ -249,6 +259,7 @@ public class Bio : SpellBase
         Name = GetType().Name;
         Power = 42;
         ElementalAffix = Elements.None;
+        SwordMagicPower =20;
     }
 
     public override void UpdateDamageParts(ref AttackResult result,
@@ -342,6 +353,7 @@ public class Flare : SpellBase
         Power = 119;
         ElementalAffix = Elements.None;
         IgnoresReflect = true;
+        SwordMagicPower = 60;
     }
 }
 
@@ -353,6 +365,7 @@ public class Doomsday : SpellBase
         Power = 112;
         ElementalAffix = Elements.Shadow;
         IgnoresReflect = true;
+        SwordMagicPower = 40;
     }
 }
 
@@ -363,5 +376,6 @@ public class Water : SpellBase
         Name = GetType().Name;
         Power = 64;
         ElementalAffix = Elements.Water;
+        SwordMagicPower = 25;
     }
 }
