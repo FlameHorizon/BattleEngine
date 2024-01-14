@@ -20,7 +20,10 @@ public class UnitTests
             Spr = 23,
             Equipment = new Equipment
             {
-                Weapon = new Weapon { Name = "Dagger", Atk = 12, WeaponType = WeaponType.Dagger },
+                Weapon = new Weapon
+                {
+                    Name = "Dagger", Atk = 12, WeaponType = WeaponType.Dagger
+                },
                 Head = new Head { Name = "Leather Hat", MagDef = 6 },
                 Wrist = new Wrist { Name = "Wrist", Eva = 5, MagEva = 3 },
                 Armor = new Armor { Name = "Leather Shirt", Def = 6 },
@@ -43,7 +46,7 @@ public class UnitTests
         u.AddWeakness(Elements.Fire);
         u.IsWeakTo(Elements.None).Should().BeFalse();
     }
-    
+
     [Fact]
     public void Spirit_Returns_SumOfBaseSprAndEquipmentSpr()
     {
@@ -54,7 +57,7 @@ public class UnitTests
         };
         u.Spr.Should().Be(15);
     }
-    
+
     [Fact]
     public void SetSpirit_ChangesOnlyBasedValueOfSpirit()
     {
@@ -65,7 +68,7 @@ public class UnitTests
         };
 
         u.Spr.Should().Be(15);
-        
+
         u.Spr = 5;
         u.Spr.Should().Be(10);
     }
@@ -77,7 +80,7 @@ public class UnitTests
         {
             Spd = 10
         };
-        
+
         u.AtbBarLength.Should().Be(8000);
     }
 }

@@ -36,10 +36,10 @@ public class Engine
     {
         return AttackInternal(attacker, target);
     }
-    
+
     private AttackResult AttackInternal(
-        Unit attacker, 
-        Unit target, 
+        Unit attacker,
+        Unit target,
         bool isChargeAttack = false)
     {
         var result = new AttackResult
@@ -122,7 +122,7 @@ public class Engine
         {
             return result;
         }
-        
+
         // Calculate if the target will counter attack
         bool isCounterAttack = target.Statuses.HasFlag(Statuses.Eye4Eye)
             ? target.Spr * 2 >= rnd % 100
@@ -853,17 +853,17 @@ public class Engine
     /// <param name="name">Name of the attack.</param>
     /// <returns>Set of result for each target.</returns>
     public IEnumerable<AttackResult> SwordArt(
-        Unit attacker, 
+        Unit attacker,
         IEnumerable<Unit> targets,
         string name)
     {
         return targets.Select(target => SwordArt(attacker, target, name, true));
     }
-    
+
     public AttackResult SwordArt(
-        Unit attacker, 
-        Unit target, 
-        string name, 
+        Unit attacker,
+        Unit target,
+        string name,
         bool isMultiTarget = false)
     {
         // In most cases, we are not going to change
@@ -882,12 +882,12 @@ public class Engine
             IEnumerable<Unit> nearDeathUnits = attacker.IsAi
                 ? Enemies.Members.Where(x => x.NearDeath)
                 : Party.Members.Where(x => x.NearDeath);
-           
+
             // Get a set of units which can be attacked by Charge! skill.
             IEnumerable<Unit> chargeTargets = attacker.IsAi
                 ? Party.Members.Where(x => x.IsAlive)
                 : Enemies.Members.Where(x => x.IsAlive);
-            
+
             // For each nearDeathUnit call Attack method against random target.
             // All of them can attack different target.
             foreach (Unit unit in nearDeathUnits)
@@ -895,13 +895,13 @@ public class Engine
                 // NOTE: Based on the one video which I have watched
                 // Trance is not increased by units which are under
                 // influence of Charge! skill.
-               
+
                 // Select random target from the chargeTargets.
                 int index = _randomProvider.Next(0, chargeTargets.Count());
                 Unit chargeTarget = chargeTargets.ToArray()[index];
                 result.ChargeAttack.Add(Attack(unit, chargeTarget));
             }
-            
+
             // Since there is no single target we have to remove the Target value.
             // TODO: Sometimes there is actually one target, I have to add this case as well.
             // I think, the same target should be in ChargeAttack property
@@ -923,7 +923,7 @@ public class Engine
         {
             result.Damage = 0;
         }
-        
+
         // When target absorbs elemental damage is should
         // be healed by the amount indicated in the damage.
         else if (target.AbsorbsElemental(swordArt.ElementalAffix))
@@ -1045,7 +1045,7 @@ public class AttackResult
     public Statuses ApplicableStatuses { get; set; }
     public bool TargetAbsorbed { get; set; }
     public Unit Attacker { get; set; }
-    
+
     /// <summary>
     ///     Indicates the target of the attack. Some abilities can change
     ///     the target of the attack. For example, Reflect status. In such
@@ -1054,7 +1054,7 @@ public class AttackResult
     ///     multi-target and there is no single target. 
     /// </summary>
     public Unit? Target { get; set; }
-    
+
     public bool IsReflected { get; set; }
     public Unit? RefelectedTo { get; set; }
 
@@ -1449,11 +1449,11 @@ public class Unit
     {
         _statusImmune |= status;
     }
-    
+
     /// <summary>
     ///     Indicates if unit is near death state.
     /// </summary>
-    public bool NearDeath => CurrentHp <= Hp / 8.0; 
+    public bool NearDeath => CurrentHp <= Hp / 8.0;
 }
 
 [Flags]

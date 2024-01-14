@@ -22,7 +22,8 @@ public class Weapon
         {
             if (value is < 0 or > 100)
             {
-                throw new ArgumentOutOfRangeException(nameof(value), "Value has to be between 0 and 100.");
+                throw new ArgumentOutOfRangeException(nameof(value),
+                    "Value has to be between 0 and 100.");
             }
 
             _statusAccuracy = value;
@@ -38,12 +39,12 @@ public class Weapon
     ///     Indicates the elemental affinity of the weapon.
     /// </summary>
     public Elements ElementalAffix { get; init; } = Elements.None;
-    
+
     /// <summary>
     ///     Indicates if this weapon has Elem-Atk of particular element.
     /// </summary>
     public Elements ElemAtk { get; set; } = Elements.None;
-    
+
     public int Mag { get; set; }
     public int Spr { get; set; }
     public int MagDef { get; set; }

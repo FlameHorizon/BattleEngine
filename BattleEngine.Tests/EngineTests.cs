@@ -2160,7 +2160,7 @@ public class EngineTests
     [Fact]
     public void SwordArt_Should_DealDamage_When_ShockUsedWithIce()
     {
-        var rnd = new MockRandomProvider(1);
+        var mockRandomProvider = new MockRandomProvider(1);
         Unit attacker = DefaultUnit();
         attacker.Name = "A";
         attacker.Equipment.Weapon = new Weapon
@@ -2174,7 +2174,7 @@ public class EngineTests
         target.Name = "B";
         target.AddWeakness(Elements.Ice);
 
-        var e = new Engine(rnd);
+        var e = new Engine(mockRandomProvider);
         AttackResult result = e.SwordArt(attacker, target, "Shock");
 
         result.Attacker.Name.Should().Be("A");
@@ -2183,8 +2183,6 @@ public class EngineTests
         result.Bonus.Should().Be(16);
         result.Damage.Should().Be(21 * 16);
     }
-    
-    
 }
 
 public class MockRandomProvider : IRandomProvider

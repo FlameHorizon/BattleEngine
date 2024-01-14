@@ -252,9 +252,11 @@ public class StockBreak : SwordArtBase
         int @base = (int)(Math.Floor((result.Attacker.Atk * 15.0) / 10.0) -
                           result.Target!.Def);
         var bonus = (int)(result.Attacker.Str + rnd.Next() %
-            (Math.Floor((result.Attacker.Lvl + result.Attacker.Str) / 8.0) + 1));
-        
-        if (result.Target.IsWeakTo(result.Attacker.Equipment.Weapon.ElementalAffix))
+            (Math.Floor((result.Attacker.Lvl + result.Attacker.Str) / 8.0) +
+             1));
+
+        if (result.Target.IsWeakTo(result.Attacker.Equipment.Weapon
+                .ElementalAffix))
         {
             bonus = (int)Math.Floor(bonus * 1.5);
         }
@@ -263,7 +265,7 @@ public class StockBreak : SwordArtBase
         {
             bonus /= 2;
         }
-        
+
         if (result.Attacker.Statuses.HasFlag(Statuses.Mini))
         {
             @base = 1;
@@ -295,9 +297,10 @@ public class Climhazzard : SwordArtBase
     {
         Unit a = result.Attacker;
         Unit t = result.Target!;
-        
+
         int @base = a.Atk * 2 - t.MagDef;
-        int bonus = (int)(a.Str + rnd.Next() % (Math.Floor((a.Lvl + a.Str) / 8.0) + 1));
+        int bonus =
+            (int)(a.Str + rnd.Next() % (Math.Floor((a.Lvl + a.Str) / 8.0) + 1));
 
         if (t.Statuses.HasFlag(Statuses.Shell))
         {
@@ -308,7 +311,7 @@ public class Climhazzard : SwordArtBase
         {
             bonus /= 2;
         }
-        
+
         result.Base = @base;
         result.Bonus = bonus;
     }
@@ -327,15 +330,17 @@ public class Shock : SwordArtBase
     {
         Unit a = result.Attacker;
         Unit t = result.Target!;
-        
+
         int @base = a.Atk * 3 - t.Def;
-        int bonus = (int)(a.Str + rnd.Next() % (Math.Floor((a.Lvl + a.Str) / 8.0) + 1));
-        
-        if (result.Target!.IsWeakTo(result.Attacker.Equipment.Weapon.ElementalAffix))
+        int bonus =
+            (int)(a.Str + rnd.Next() % (Math.Floor((a.Lvl + a.Str) / 8.0) + 1));
+
+        if (result.Target!.IsWeakTo(result.Attacker.Equipment.Weapon
+                .ElementalAffix))
         {
             bonus = (int)Math.Floor(bonus * 1.5);
         }
-        
+
         if (t.Statuses.HasFlag(Statuses.Protect))
         {
             bonus /= 2;
@@ -346,7 +351,7 @@ public class Shock : SwordArtBase
             @base = 1;
             bonus = 1;
         }
-        
+
         result.Base = @base;
         result.Bonus = bonus;
     }

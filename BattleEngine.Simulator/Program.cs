@@ -10,10 +10,7 @@ using BattleEngine;
 using BattleEngine.Equipments;
 
 Unit player = GetZidane();
-
-
-
-Unit target = GetBaku();
+Unit target = GetVivi();
 
 // Initialize battle engine
 
@@ -24,11 +21,12 @@ var i = 0;
 while (i < 100)
 {
     AttackResult result = e.Attack(player, target);
-    Console.WriteLine($"{result.Attacker.Name} attacks {result.Target.Name} for {result.Damage} damage.");
-    //Console.WriteLine(result.ToString());
+    Console.WriteLine(
+        $"{result.Attacker.Name} attacks {result.Target.Name} for {result.Damage} damage.");
 
     result = e.Attack(target, player);
-    Console.WriteLine($"{result.Attacker.Name} attacks {result.Target.Name} for {result.Damage} damage.");
+    Console.WriteLine(
+        $"{result.Attacker.Name} attacks {result.Target.Name} for {result.Damage} damage.");
 
     i++;
 }
@@ -74,7 +72,10 @@ Unit GetKingLeo()
         EnemyType = EnemyType.Human,
         Equipment = new Equipment
         {
-            Weapon = new Weapon { Name = "Dummy", Atk = 8, Mag = 8, WeaponType = WeaponType.Sword },
+            Weapon = new Weapon
+            {
+                Name = "Dummy", Atk = 8, Mag = 8, WeaponType = WeaponType.Sword
+            },
             Head = new Head { Name = "Dummy", MagDef = 10 },
             Wrist = new Wrist { Name = "Dummy", Eva = 2, MagEva = 3 },
             Armor = new Armor { Name = "Dummy", Def = 10 }
@@ -98,9 +99,13 @@ Unit GetStainer()
         EnemyType = EnemyType.Human,
         Equipment = new Equipment
         {
-            Weapon = new Weapon { Name = "Broadsword", Atk = 12, WeaponType = WeaponType.Sword },
+            Weapon = new Weapon
+            {
+                Name = "Broadsword", Atk = 12, WeaponType = WeaponType.Sword
+            },
             Head = new Head { Name = "Bronze Helm", MagDef = 6 },
-            Wrist = new Wrist { Name = "Bronze Gloves", Spr = 1, Eva = 8, MagEva = 2 },
+            Wrist = new Wrist
+                { Name = "Bronze Gloves", Spr = 1, Eva = 8, MagEva = 2 },
             Armor = new Armor { Name = "Bronze Armor", Def = 9 }
         }
     };
@@ -122,7 +127,8 @@ Unit GetFang()
         Equipment = new Equipment
         {
             Weapon = new Weapon { Name = "Dummy", Atk = 8 },
-            Armor = new Armor { Name = "Dummy", Def = 10, MagDef = 10, Eva = 2, MagEva = 3 }
+            Armor = new Armor
+                { Name = "Dummy", Def = 10, MagDef = 10, Eva = 2, MagEva = 3 }
         },
         IsAi = true
     };
@@ -144,7 +150,8 @@ Unit GetGoblin()
         Equipment = new Equipment
         {
             Weapon = new Weapon { Name = "Dummy", Atk = 8 },
-            Armor = new Armor { Name = "Dummy", Def = 10, MagDef = 10, Eva = 2, MagEva = 3 }
+            Armor = new Armor
+                { Name = "Dummy", Def = 10, MagDef = 10, Eva = 2, MagEva = 3 }
         },
         IsAi = true
     };
@@ -165,9 +172,7 @@ Unit GetVivi()
         {
             Weapon = GetWeapon("Mage Staff"),
             Head = GetHead("Leather Hat"),
-            Wrist = null!,
             Armor = GetArmor("Leather Shirt"),
-            Accessory = null!
         }
     };
 }
@@ -176,8 +181,10 @@ static Weapon GetWeapon(string name)
 {
     return name switch
     {
-        "Dagger" => new Weapon { Name = "Dagger", Atk = 12, WeaponType = WeaponType.Dagger },
-        "Mage Staff" => new Weapon { Name = "Mage Staff", Atk = 12, WeaponType = WeaponType.Staff },
+        "Dagger" => new Weapon
+            { Name = "Dagger", Atk = 12, WeaponType = WeaponType.Dagger },
+        "Mage Staff" => new Weapon
+            { Name = "Mage Staff", Atk = 12, WeaponType = WeaponType.Staff },
         "Mage Masher" => new Weapon
         {
             Name = "Mage Masher", Atk = 14, WeaponType = WeaponType.Dagger,
@@ -219,7 +226,7 @@ Unit GetZidane()
         Spr = 23,
         Equipment = new Equipment
         {
-            Weapon = GetWeapon("Dagger"),
+            Weapon = GetWeapon("Mage Masher"),
             Head = GetHead("Leather Hat"),
             Wrist = new Wrist { Name = "Wrist", Eva = 5, MagEva = 3 },
             Armor = GetArmor("Leather Shirt")
@@ -247,7 +254,7 @@ Unit GetFlan()
         EnemyType = EnemyType.Normal,
         IsAi = true
     };
-    
+
     u.AddWeakness(Elements.Fire);
     u.AddResistance(Elements.Ice);
 
