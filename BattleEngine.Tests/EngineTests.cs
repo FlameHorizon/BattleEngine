@@ -2206,35 +2206,35 @@ public class EngineTests
     [Fact]
     public void SwordMagic_Should_IgnoreProtect()
     {
-         var rnd = new MockRandomProvider(1);
-         Unit attacker = DefaultUnit();
-         attacker.Name = "A";
- 
-         Unit target = DefaultUnit();
-         target.Name = "B";
-         target.AddStatus(Statuses.Protect);
- 
-         var e = new Engine(rnd);
-         AttackResult result = e.SwordMagic(attacker, target, "Fire");
-         result.Base.Should().Be(6);
-         result.Bonus.Should().Be(11);
-         result.Damage.Should().Be(66);       
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+
+        Unit target = DefaultUnit();
+        target.Name = "B";
+        target.AddStatus(Statuses.Protect);
+
+        var e = new Engine(rnd);
+        AttackResult result = e.SwordMagic(attacker, target, "Fire");
+        result.Base.Should().Be(6);
+        result.Bonus.Should().Be(11);
+        result.Damage.Should().Be(66);
     }
-    
+
     [Fact]
     public void SwordMagic_Should_NotRemoveSleepStatus()
     {
-         var rnd = new MockRandomProvider(1);
-         Unit attacker = DefaultUnit();
-         attacker.Name = "A";
- 
-         Unit target = DefaultUnit();
-         target.Name = "B";
-         target.AddStatus(Statuses.Sleep);
- 
-         var e = new Engine(rnd);
-         AttackResult result = e.SwordMagic(attacker, target, "Fire");
-         result.Target!.Statuses.Should().HaveFlag(Statuses.Sleep);
+        var rnd = new MockRandomProvider(1);
+        Unit attacker = DefaultUnit();
+        attacker.Name = "A";
+
+        Unit target = DefaultUnit();
+        target.Name = "B";
+        target.AddStatus(Statuses.Sleep);
+
+        var e = new Engine(rnd);
+        AttackResult result = e.SwordMagic(attacker, target, "Fire");
+        result.Target!.Statuses.Should().HaveFlag(Statuses.Sleep);
     }
 
     [Fact]
@@ -2259,20 +2259,20 @@ public class EngineTests
 
         var rnd = new MockRandomProvider(1);
         var e = new Engine(p, en, rnd);
-        
-        IEnumerable<AttackResult> result = e.SwordMagic(p1, en.Members, "Doomsday");
+
+        IEnumerable<AttackResult> result =
+            e.SwordMagic(p1, en.Members, "Doomsday");
         result.Should().HaveCount(2);
         result.First().Attacker.Name.Should().Be("A");
         result.First().Target!.Name.Should().Be("B");
         result.First().Base.Should().Be(41);
         result.First().Bonus.Should().Be(11);
         result.First().Damage.Should().Be(451);
-        
+
         result.ToArray()[1].Attacker.Name.Should().Be("A");
         result.ToArray()[1].Target!.Name.Should().Be("C");
         result.ToArray()[1].Damage.Should().Be(451);
     }
-    
 }
 
 public class MockRandomProvider : IRandomProvider

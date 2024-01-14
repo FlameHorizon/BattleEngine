@@ -259,7 +259,7 @@ public class Bio : SpellBase
         Name = GetType().Name;
         Power = 42;
         ElementalAffix = Elements.None;
-        SwordMagicPower =20;
+        SwordMagicPower = 20;
     }
 
     public override void UpdateDamageParts(ref AttackResult result,
