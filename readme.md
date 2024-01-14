@@ -39,4 +39,4 @@ This battle engine strives to implement all of the logic which is in video game 
 - [ ] Flair
 - [X] Sword Arts
 - [ ] Support Abilities
-- [ ] Sword Magic
+- [X] Sword Magic

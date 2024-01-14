@@ -998,6 +998,11 @@ public class Engine
         int bonus = (int)(attacker.Str + _randomProvider.Next() %
             (Math.Floor((attacker.Lvl + attacker.Str) / 8.0) + 1));
 
+        if (target.IsWeakTo(spell.ElementalAffix))
+        {
+            bonus += (int)(bonus * 0.5);
+        }
+        
         result.Base = @base;
         result.Bonus = bonus;
         result.Damage = @base * bonus;

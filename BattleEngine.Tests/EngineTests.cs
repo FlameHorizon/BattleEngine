@@ -2273,6 +2273,23 @@ public class EngineTests
         result.ToArray()[1].Target!.Name.Should().Be("C");
         result.ToArray()[1].Damage.Should().Be(451);
     }
+
+    [Fact]
+    public void SwordMagic_Should_IncreaseDamage_When_TargetIsElementalWeak()
+    {
+        Unit attacker = DefaultUnit();
+        Unit target = DefaultUnit();
+        target.AddWeakness(Elements.Fire);
+        
+        var rnd = new MockRandomProvider(1);
+        var e = new Engine(rnd);
+        
+        AttackResult result = e.SwordMagic(attacker, target, "Fire");
+        result.Base.Should().Be(6);
+        result.Bonus.Should().Be(16);
+        result.Damage.Should().Be(96);
+    }
+    
 }
 
 public class MockRandomProvider : IRandomProvider
