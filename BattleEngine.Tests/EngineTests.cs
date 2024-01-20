@@ -602,6 +602,24 @@ public class EngineTests
 
 
     [Fact]
+    public void Tick_Should_NotIncreaseAtbBeyondAtbBarLength()
+    {
+        var rnd = new MockRandomProvider(1);
+        var p = new Party
+        {
+            Members = new[] { DefaultUnit() }
+        };
+
+        var e = new Engine(p, new Enemies(), rnd);
+        for (int i = 0; i < 10000; i++)
+        {
+            e.Tick();
+        }
+
+        p.Members.First().Atb.Should().Be(p.Members.First().AtbBarLength);
+    }
+
+    [Fact]
     public void Attack_Should_BeInverted_When_InIpsensCastle()
     {
         var rnd = new MockRandomProvider(1);
@@ -956,7 +974,8 @@ public class EngineTests
     }
 
     [Fact]
-    public void Trance_Should_Decrease_When_AttackerIsInTrance_And_TakesTurn()
+    public void
+        Trance_Should_Decrease_When_AttackerIsInTrance_And_TakesTurn()
     {
         var rnd = new MockRandomProvider(1);
         Unit attacker = DefaultUnit();
@@ -975,7 +994,8 @@ public class EngineTests
     }
 
     [Fact]
-    public void Trance_Should_NotIncreaseDamage_When_StainerWearingBloodSword()
+    public void
+        Trance_Should_NotIncreaseDamage_When_StainerWearingBloodSword()
     {
         var rnd = new MockRandomProvider(1);
         Unit attacker = DefaultUnit();
@@ -1318,7 +1338,8 @@ public class EngineTests
     [InlineData("Semi-Rare", 16)]
     [InlineData("Uncommon", 64)]
     [InlineData("Common", 255)]
-    public void Steal_Should_StealItemFromTarget(string itemStolen, int roll)
+    public void Steal_Should_StealItemFromTarget(string itemStolen,
+        int roll)
     {
         var rnd = new MockRandomProvider(roll);
         Unit attacker = DefaultUnit();
@@ -1635,7 +1656,8 @@ public class EngineTests
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void Annoy_Should_AddStatusTrouble_When_NotResistant(bool isImmune)
+    public void Annoy_Should_AddStatusTrouble_When_NotResistant(
+        bool isImmune)
     {
         var rnd = new MockRandomProvider(2);
         Unit attacker = DefaultUnit();
@@ -1801,7 +1823,8 @@ public class EngineTests
     [InlineData(1, true)]
     [InlineData(3, true)]
     [InlineData(5, false)]
-    public void SwordArts_Should_DealDamage_When_IaiStrikeUsedAndHits(int roll,
+    public void SwordArts_Should_DealDamage_When_IaiStrikeUsedAndHits(
+        int roll,
         bool isHit)
     {
         var rnd = new MockRandomProvider(roll);
@@ -1823,14 +1846,16 @@ public class EngineTests
             return;
         }
 
-        result.InflictStatus.First().Status.Should().HaveFlag(Statuses.Death);
+        result.InflictStatus.First().Status.Should()
+            .HaveFlag(Statuses.Death);
         result.InflictStatus.First().Unit.Name.Should().Be("B");
     }
 
     [Theory]
     [InlineData(1, true)]
     [InlineData(2, false)]
-    public void SwordArts_Should_DealDamage_When_PowerBreakUsedAndHits(int roll,
+    public void SwordArts_Should_DealDamage_When_PowerBreakUsedAndHits(
+        int roll,
         bool isHit)
     {
         var rnd = new MockRandomProvider(roll);
@@ -2275,7 +2300,8 @@ public class EngineTests
     }
 
     [Fact]
-    public void SwordMagic_Should_IncreaseDamage_When_TargetIsElementalWeak()
+    public void
+        SwordMagic_Should_IncreaseDamage_When_TargetIsElementalWeak()
     {
         Unit attacker = DefaultUnit();
         Unit target = DefaultUnit();
@@ -2401,15 +2427,15 @@ public class EngineTests
     [Fact]
     public void Magic_Should_ExtractOre_When_JewelCasted()
     {
-         Unit caster = DefaultUnit();
-         Unit target = DefaultUnit();
- 
-         var rnd = new MockRandomProvider(1);
-         var e = new Engine(rnd);
- 
-         AttackResult result = e.Magic(caster, target, "Jewel");
-         result.StealSuccess.Should().BeTrue();
-         result.ItemStolen.Should().Be("Ore");
+        Unit caster = DefaultUnit();
+        Unit target = DefaultUnit();
+
+        var rnd = new MockRandomProvider(1);
+        var e = new Engine(rnd);
+
+        AttackResult result = e.Magic(caster, target, "Jewel");
+        result.StealSuccess.Should().BeTrue();
+        result.ItemStolen.Should().Be("Ore");
     }
 }
 

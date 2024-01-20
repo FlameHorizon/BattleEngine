@@ -500,22 +500,6 @@ public class Engine
             { "Full-Life", new FullLife()},
             { "Might", new Might()},
             { "Jewel", new Jewel()}
-            
-
-
-            /*
-            { "Fire", new Spell("Fire", 14, Elements.Fire) },
-            { "Fira", new Spell("Fira", 29, Elements.Fire) },
-            { "Firaga", new Spell("Firaga", 72, Elements.Fire) },
-            { "Blizzard", new Spell("Blizzard", 14, Elements.Fire) },
-            { "Blizzara", new Spell("Blizzara", 29, Elements.Ice) },
-            { "Blizzaga", new Spell("Blizzaga", 72, Elements.Ice) },
-            { "Thunder", new Spell("Thunder", 14, Elements.Thunder) },
-            { "Thundara", new Spell("Thundara", 29, Elements.Thunder) },
-            { "Thundaga", new Spell("Thundaga", 72, Elements.Thunder) },
-            { "Osmose", new Spell("Osmose", 15, Elements.None) },
-            {"Demi", new Spell("Demi", 30, Elements.None)}
-        */
         };
 
         if (spellNameToSpell.ContainsKey(spellName) == false)
@@ -586,13 +570,13 @@ public class Engine
         foreach (Unit u in Party.Members)
         {
             increment = CalculateAtbIncrement(increment, u);
-            u.Atb += increment;
+            u.Atb = Math.Min(u.Atb + increment, u.AtbBarLength);
         }
 
         foreach (Unit u in Enemies.Members)
         {
             increment = CalculateAtbIncrement(increment, u);
-            u.Atb += increment;
+            u.Atb = Math.Min(u.Atb + increment, u.AtbBarLength);
         }
     }
 
@@ -1384,11 +1368,19 @@ public class Unit
     /// </summary>
     public int CurrentHp { get; set; }
 
+    /// <summary>
+    ///     Indicates the length of the ATB bar. Once Atb is equal to this value
+    ///     unit can perform an action.
+    /// </summary>
     public int AtbBarLength
     {
         get => (60 - Spd) * 160;
+        set => throw new NotImplementedException();
     }
 
+    /// <summary>
+    ///     Indicates the amount of ATB unit has.
+    /// </summary>
     public int Atb { get; set; }
 
     public int TranceBarLength

@@ -6,6 +6,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BattleEngine.Tests", "Battl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BattleEngine.Simulator", "BattleEngine.Simulator\BattleEngine.Simulator.csproj", "{9938A011-BA1A-4FD5-94F7-1BCD40574428}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BattleEngine.Driver", "BattleEngine.Driver\BattleEngine.Driver.csproj", "{F2073AEB-905B-4EAF-A842-BA69B1653F82}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BattleEngine.Driver.Tests", "BattleEngine.Driver.Tests\BattleEngine.Driver.Tests.csproj", "{87F33CB3-A96D-492D-A593-553917DCF8D5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +28,13 @@ Global
 		{9938A011-BA1A-4FD5-94F7-1BCD40574428}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9938A011-BA1A-4FD5-94F7-1BCD40574428}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9938A011-BA1A-4FD5-94F7-1BCD40574428}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F2073AEB-905B-4EAF-A842-BA69B1653F82}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F2073AEB-905B-4EAF-A842-BA69B1653F82}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F2073AEB-905B-4EAF-A842-BA69B1653F82}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F2073AEB-905B-4EAF-A842-BA69B1653F82}.Release|Any CPU.Build.0 = Release|Any CPU
+		{87F33CB3-A96D-492D-A593-553917DCF8D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{87F33CB3-A96D-492D-A593-553917DCF8D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{87F33CB3-A96D-492D-A593-553917DCF8D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{87F33CB3-A96D-492D-A593-553917DCF8D5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
